@@ -8,43 +8,29 @@ from flask_jwt_extended import (
 
 from app.extension import db
 from app.models import User
+from app.request.auth_request import LoginRequest
 from app.schema.user_schema import UserSchema
+from app.service.auth_service import AuthService
+from app.shared.commons import validate_request
 from config.logging import logger
 
 user_schema = UserSchema(many=False)
 
 
-def login_user():
+@validate_request(LoginRequest)
+def login_user(payload):
     """
     Authenticate a user and return JWT access and refresh tokens.
-
-    Expects a JSON payload in the request body with the following structure:
-        {
-            "email": "<user_email>"
-        }
-
-    Steps:
-        1. Retrieve the user by email from the database.
-        2. If the user does not exist, return a 404 error.
-        3. Serialize the user data using UserSchema.
-        4. Create JWT access and refresh tokens with user data as additional claims.
-        5. Return the tokens as a JSON response.
-
-    Returns:
-        Response (JSON):
-            - 200 OK with access_token and refresh_token if successful
-            - 404 Not Found if user does not exist
     """
-    json_data = request.json
-    email = json_data.get("email")
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({"msg": "User not found"}), 404
 
-    # Dump user data to dict
+    try:
+        user = AuthService.login(payload)
+    except ValueError as e:
+        logger.error(e)
+        return jsonify({"msg": str(e)}), 401
+
+    logger.info(user)
     user_data = user_schema.dump(user)
-
-    # Create access token with user info as additional claims
     access_token = create_access_token(
         identity=str(user.id), additional_claims={"user": user_data}
     )

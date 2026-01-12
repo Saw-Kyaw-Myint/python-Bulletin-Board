@@ -6,6 +6,9 @@ from app.models import User
 class UserDao(BaseDao):
     """Handles direct database operations"""
 
+    def find_by_email(email: str):
+        return User.query.filter_by(email=email, deleted_at=None).first()
+
     def get_all():
         return User.query.all()
 

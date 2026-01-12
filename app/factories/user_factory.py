@@ -3,20 +3,26 @@ from faker import Faker
 
 from app.factories.base_factory import BaseFactory
 from app.models import User
+from app.utils.hash import hash_password
 
 fake = Faker()
 
 
 class UserFactory:
 
-    def make():
-        return User(
-            name=fake.name(),
-            email=fake.unique.email(),
-        )
+    def make_data():
+        """Return fake user data (not saved to DB)."""
+
+        return {
+            "name": fake.name(),
+            "email": fake.unique.email(),
+            "password": hash_password("password123"),  # default hashed password
+            "phone": "09451340513",
+            "address": fake.address(),
+        }
 
     def create():
-        return BaseFactory.create_one(UserFactory.make)
+        return BaseFactory.create_one(UserFactory.make_data, User)
 
     def create_many(count=10):
-        return BaseFactory.create_many(UserFactory.make, count)
+        return BaseFactory.create_many(UserFactory.make_data, User, count)

@@ -1,7 +1,9 @@
 from functools import wraps
 
-from flask import jsonify, request
+from flask import abort, jsonify, make_response, request
 from pydantic import ValidationError
+
+from config.logging import logger
 
 
 def validate_request(schema):
@@ -11,7 +13,7 @@ def validate_request(schema):
             try:
                 payload = schema.model_validate(request.json)
             except ValidationError as e:
-                return jsonify({"errors": format_pydantic_errors(e)}), 401
+                return jsonify({"errors": format_pydantic_errors(e, schema)}), 422
 
             return fn(payload, *args, **kwargs)
 
@@ -20,32 +22,33 @@ def validate_request(schema):
     return decorator
 
 
-def format_pydantic_errors(exc: ValidationError):
-    """
-    Format Pydantic validation errors into a simplified list of dictionaries.
+def format_pydantic_errors(e, schema):
+    errors = {}
 
-    Each error is transformed into a dictionary with:
-        - `field`: Dot-separated path of the invalid field.
-        - `message`: Human-readable error message.
+    attributes = schema.attributes() if hasattr(schema, "attributes") else {}
+    messages = schema.messages() if hasattr(schema, "messages") else {}
 
-    Args:
-        exc (ValidationError): The Pydantic validation error instance.
+    for err in e.errors():
+        field = err["loc"][-1]  # password
+        rule = err["type"]  # string_too_short
+        message_key = f"{field}.{rule}"  # password.string_too_short
 
-    Returns:
-        List[dict]: A list of dictionaries representing the formatted errors.
+        logger.info(message_key)
 
-    Example:
-        [
-            {"field": "user.email", "message": "value is not a valid email"},
-            {"field": "user.age", "message": "ensure this value is greater than 0"}
-        ]
-    """
-    formatted_errors = []
-    for err in exc.errors():
-        formatted_errors.append(
-            {"field": ".".join(str(loc) for loc in err["loc"]), "message": err["msg"]}
-        )
-    return formatted_errors
+        # 1️⃣ custom message
+        if message_key in messages:
+            errors[field] = messages[message_key]
+            continue
+
+        # 2️⃣ default fallback
+        label = attributes.get(field, field.capitalize())
+
+        if rule == "missing":
+            errors[field] = f"{label} is required"
+        else:
+            errors[field] = err["msg"]
+
+    return errors
 
 
 def before_middleware(bp, middleware):
@@ -86,3 +89,15 @@ def after_middleware(bp, middleware):
     def _middleware(response):
         # Pass the response to the middleware
         return middleware(response)
+
+
+def field_error(field: str, message: str, status_code: int = 400):
+    """
+    Raise a JSON error for a specific field.
+
+    :param field: Field name (e.g., 'email' or 'password')
+    :param message: Error message
+    :param status_code: HTTP status code
+    """
+    response = make_response(jsonify({"errors": {field: message}}), status_code)
+    abort(response)
