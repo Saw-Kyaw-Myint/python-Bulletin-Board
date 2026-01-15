@@ -8,6 +8,10 @@ from config.logging import logger
 
 class UserService(BaseService):
     """Handles business logic"""
+    
+    def filter_paginate(filters,page: int, per_page: int):
+        users=UserDao.paginate(filters,page, per_page)
+        return users
 
     def list():
         return UserDao.get_all()

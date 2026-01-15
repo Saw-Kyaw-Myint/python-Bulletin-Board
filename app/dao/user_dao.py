@@ -1,10 +1,49 @@
 from app.dao.base_dao import BaseDao
+from sqlalchemy import or_
 from app.extension import db
 from app.models import User
+from datetime import datetime
+from config.logging import logger
 
 
 class UserDao(BaseDao):
     """Handles direct database operations"""
+
+    def paginate(filters, page: int, per_page: int):
+        query = User.query.filter(User.deleted_at.is_(None))
+
+        name = (filters.get("name") or "").strip()
+        email = (filters.get("email") or "").strip()
+
+        if name or email:
+            or_conditions = []
+            if name:
+                or_conditions.append(User.name.ilike(f"%{name}%"))
+            if email:
+                or_conditions.append(User.email.ilike(f"%{email}%"))
+            query = query.filter(or_(*or_conditions))
+        
+        # --- ROLE FILTER ---
+        if filters.get("role") is not None:
+            query = query.filter(User.role == filters["role"])
+        
+        # --- DATE FILTER ---
+        start_date = filters.get("start_date")
+        end_date = filters.get("end_date")
+        if start_date and end_date:
+            try:
+                start = datetime.fromisoformat(start_date)
+                end = datetime.fromisoformat(end_date)
+                query = query.filter(User.created_at.between(start, end))
+            except ValueError as e:
+                logger.error(f"Invalid date format: {e}")
+
+        # --- ORDER & PAGINATE ---
+        return query.order_by(User.created_at.desc()).paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
 
     def find_by_email(email: str):
         return User.query.filter_by(email=email, deleted_at=None).first()

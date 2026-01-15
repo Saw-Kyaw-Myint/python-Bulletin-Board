@@ -2,6 +2,7 @@ from flask import jsonify, request
 
 from app.request.user_request import UserCreateRequest, UserUpdateRequest
 from app.schema.user_schema import UserSchema
+from app.schema.user_list_schema import UserListSchema
 from app.service.user_service import UserService
 from app.shared.commons import validate_request
 import os
@@ -10,11 +11,32 @@ from config.logging import logger
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
+user_list = UserListSchema(many=True)
 
 
 def get_users():
-    users = UserService.list()
-    return jsonify(users_schema.dump(users)), 200
+    filters = {
+        "name": request.args.get("name", type=str),
+        "email": request.args.get("email", type=str),
+        "role": request.args.get("role", type=int),
+        "start_date": request.args.get("start_date"),
+        "end_date": request.args.get("end_date"),
+    }
+
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+
+    pagination = UserService.filter_paginate(filters, page, per_page)
+
+    return jsonify({
+        "data": user_list.dump(pagination.items),
+        "meta": {
+            "page": pagination.page,
+            "per_page": pagination.per_page,
+            "total": pagination.total,
+            "pages": pagination.pages,
+        }
+    })
 
 
 @validate_request(UserCreateRequest)
