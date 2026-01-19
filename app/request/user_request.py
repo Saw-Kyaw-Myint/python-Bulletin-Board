@@ -1,8 +1,11 @@
 # app/request/user_request.py
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, EmailStr, Field, constr, validator
+
+from app.shared.commons import field_error
+from config.logging import logger
 
 NonEmptyStr = constr(min_length=1, strip_whitespace=True)
 
@@ -14,22 +17,41 @@ class UserCreateRequest(BaseModel):
 
     name: NonEmptyStr
     email: EmailStr = Field(..., max_length=50)
-    password: str = Field(
-        ...,
-        min_length=6,
-        max_length=20,
-        pattern=r"^[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?]{8,20}$",
-    )
-    confirm_password: str
+    password: str
+
+    @validator("password")
+    def strong_password(cls, v):
+        if len(v) < 6 or len(v) > 20:
+            raise ValueError("Password must be 6-20 characters")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must include at least one uppercase letter")
+        if not any(c.islower() for c in v):
+            raise ValueError("Password must include at least one lowercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must include at least one number")
+        if not any(c in "@$!%*?&" for c in v):
+            raise ValueError(
+                "Password must include at least one special character @$!%*?&"
+            )
+        return v
+
+    confirm_password: NonEmptyStr
     role: int = Field(..., ge=0, le=1)
     phone: Optional[str] = None
-    dob: Optional[date] = None
+    dob: Optional[date | str] = None
+    profile: Optional[Any] = None
     address: NonEmptyStr
 
     @validator("confirm_password")
     def passwords_match(cls, v, values):
         if "password" in values and v != values["password"]:
             raise ValueError("Passwords do not match")
+        return v
+
+    @validator("profile")
+    def file_required(cls, v):
+        if not v:
+            raise ValueError("The Profile field is required")
         return v
 
     @classmethod
@@ -46,6 +68,7 @@ class UserCreateRequest(BaseModel):
             "confirm_password.missing": "The Password Confirm field is required.",
             "role.missing": "The Role field is required.",
             "address.missing": "The Address field is required.",
+            "profile.value_error": "The Profile field is required.",
         }
 
 

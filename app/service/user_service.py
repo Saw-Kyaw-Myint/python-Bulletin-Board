@@ -19,10 +19,10 @@ class UserService(BaseService):
     def create(payload):
         # Check unique email
         if UserDao.get_by_name(payload["name"]):
-            field_error("name", "Name already exists", 401)
+            field_error("name", "Name already exists", 402)
 
         if UserDao.get_by_email(payload["email"]):
-            field_error("email", "Email already exists", 401)
+            field_error("email", "Email already exists", 402)
 
         user = User(
             name=payload["name"],

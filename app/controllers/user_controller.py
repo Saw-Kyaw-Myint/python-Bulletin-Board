@@ -8,7 +8,6 @@ from app.schema.user_list_schema import UserListSchema
 from app.schema.user_schema import UserSchema
 from app.service.user_service import UserService
 from app.shared.commons import validate_request
-from config.logging import logger
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
@@ -48,6 +47,7 @@ def create_user(payload):
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     # profile file
     file = request.files.get("profile")
+
     if not file:
         return jsonify({"profile": "The Profile field is required"}), 422
     ext = os.path.splitext(file.filename)[1]
@@ -60,12 +60,12 @@ def create_user(payload):
         user = UserService.create(payload_dict)
         file.save(os.path.join(UPLOAD_DIR, filename))
     except ValueError as e:
-        return jsonify({"msg": str(e)}), 409
+        return jsonify({"message": str(e)}), 409
 
     return (
         jsonify(
             {
-                "msg": "Register success",
+                "message": "Register success",
                 "user": {"id": user.id, "name": user.name, "email": user.email},
             }
         ),
