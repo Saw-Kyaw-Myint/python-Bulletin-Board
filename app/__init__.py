@@ -1,4 +1,6 @@
-from flask import Flask
+import os
+
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
@@ -8,7 +10,7 @@ from app.extension import db, limiter, ma, migrate
 from config.cors import CORS_CONFIG
 from config.database import DatabaseConfig
 from config.jwt import JWTConfig
-from config.logging import setup_logging
+from config.logging import logger, setup_logging
 
 app = Flask(__name__)
 
@@ -34,6 +36,13 @@ jwt = JWTManager(app)
 
 # ///////////////// implement web /////////
 import route.api as routes
+
+
+@app.route("/images/<path:filename>", methods=["GET"])
+def serve_image(filename):
+    basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    uploads_path = os.path.join(basedir, "public", "images")
+    return send_from_directory(uploads_path, filename)
 
 
 @app.route("/")

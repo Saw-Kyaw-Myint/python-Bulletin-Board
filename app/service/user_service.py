@@ -16,8 +16,13 @@ class UserService(BaseService):
     def list():
         return UserDao.get_all()
 
+    def get_user(user_id):
+        user = UserDao.get_user(user_id)
+        if not user:
+            return ValueError("User don't not exist.")
+        return user
+
     def create(payload):
-        # Check unique email
         if UserDao.get_by_name(payload["name"]):
             field_error("name", "Name already exists", 402)
 
@@ -37,19 +42,34 @@ class UserService(BaseService):
 
         return UserDao.create(user)
 
-    def update(user_id, payload):
-        user = UserDao.get_by_id(user_id)
+    def update(payload, id):
+        user = UserDao.get_by_id(id)
         if not user:
-            return None
+            field_error("internal_error", "Email  don't exists", 402)
 
-        if payload.email:
-            exists = UserDao.get_by_email(payload.email)
-            if exists and exists.id != user_id:
-                raise ValueError("Email already exists")
-            user.email = payload.email
+        exist_name = UserDao.get_by_name(payload["name"])
+        exist_email = UserDao.get_by_email(payload["email"])
+        logger.info(exist_email.email)
+        logger.info(user.email)
+        if exist_name and exist_name.name != user.name:
+            logger.info(exist_name.email)
+            logger.info(user.email)
+            field_error("name", "Name already exists", 402)
 
-        if payload.name:
-            user.name = payload.name
+        if UserDao.get_by_email(payload["email"]) and exist_email.email != user.email:
+            field_error("email", "Email already exists", 402)
+
+        user.name = payload["name"]
+        user.email = payload["email"]
+        user.role = payload["role"]
+        user.address = payload["address"]
+
+        if payload.get("password"):
+            logger.info(payload["password"])
+            user.password = hash_password(payload["password"])
+
+        if payload.get("profile"):
+            user.profile_path = payload["profile"]
 
         UserDao.update()
         return user

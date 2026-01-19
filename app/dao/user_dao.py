@@ -52,6 +52,9 @@ class UserDao(BaseDao):
     def find_by_email(email: str):
         return User.query.filter_by(email=email, deleted_at=None).first()
 
+    def get_user(user_id: int):
+        return User.query.filter_by(id=user_id, deleted_at=None, lock_flg=False).first()
+
     def is_valid_user(email: str):
         return User.query.filter_by(
             email=email, deleted_at=None, lock_flg=False

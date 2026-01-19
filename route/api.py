@@ -6,6 +6,7 @@ from app.controllers.user_controller import (
     delete_users,
     get_users,
     lock_users,
+    show_user,
     unlock_users,
     update_user,
 )
@@ -30,7 +31,8 @@ user_bp.post("/create")(create_user)
 # User Route
 before_middleware(user_bp, user_middleware)
 user_bp.get("/")(get_users)
-user_bp.put("/update/<int:user_id>")(update_user)
+user_bp.get("/show/<int:user_id>")(show_user)
+user_bp.post("/update/<int:id>")(update_user)
 user_bp.post("/multiple-delete")(delete_users)
 user_bp.post("/lock")(lock_users)
 user_bp.post("/unlock")(unlock_users)
