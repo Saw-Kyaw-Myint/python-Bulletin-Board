@@ -8,13 +8,16 @@ from app.schema.user_list_schema import UserListSchema
 from app.schema.user_schema import UserSchema
 from app.service.user_service import UserService
 from app.shared.commons import field_error, validate_request
+from app.extension import db
+from datetime import datetime
+
 from config.logging import logger
 
 user_schema = UserSchema()
 users_schema = UserSchema(many=True)
 user_list = UserListSchema(many=True)
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
-
+UPLOAD_DIR = "public/images/profile"
 
 def get_users():
     filters = {
@@ -46,26 +49,19 @@ def get_users():
 @validate_request(UserCreateRequest)
 def create_user(payload):
     file = request.files.get("profile")
+    payload_dict = payload.model_dump()
     if not file:
         field_error("profile", "The Profile field is required", 422)
-    UPLOAD_DIR = "public/images/profile"
-    payload_dict = payload.model_dump()
     user_id = payload_dict["user_id"]
-    user_dir = os.path.join(UPLOAD_DIR, str(user_id))
-    os.makedirs(user_dir, exist_ok=True)
-    ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
+    opt_file =  optimize_file(file,user_id)
+    payload_dict["profile"] = opt_file['file_url']
 
-    if ext not in ALLOWED_EXTENSIONS:
-        field_error("profile", "The profile must be a file  of type.jpg,png", 422)
-
-    original_filename = secure_filename(file.filename)
-    file_path = os.path.join(user_dir, original_filename)
-
-    payload_dict["profile"] = f"profile/{user_id}/{original_filename}"
     try:
-        user = UserService.create(payload_dict)
-        file.save(file_path)
-    except ValueError as e:
+        UserService.create(payload_dict)
+        file.save(opt_file['storage_path'])
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"message": str(e)}), 409
 
     return (
@@ -88,26 +84,19 @@ def show_user(user_id):
 def update_user(payload, id):
     file = request.files.get("profile")
     payload_dict = payload.model_dump()
-    logger.info(payload_dict)
     if file:
-        UPLOAD_DIR = "public/images/profile"
         user_id = payload_dict["user_id"]
-        user_dir = os.path.join(UPLOAD_DIR, str(user_id))
-        os.makedirs(user_dir, exist_ok=True)
-        ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
-
-        if ext not in ALLOWED_EXTENSIONS:
-            field_error("profile", "The profile must be a file  of type.jpg,png", 422)
-
-        original_filename = secure_filename(file.filename)
-        file_path = os.path.join(user_dir, original_filename)
-        payload_dict["profile"] = f"profile/{user_id}/{original_filename}"
+        opt_file = optimize_file(file,user_id)
+        file_path = opt_file['storage_path']
+        payload_dict["profile"] = opt_file['file_url']
 
     try:
         user = UserService.update(payload_dict, id)
         if file:
             file.save(file_path)
-    except ValueError as e:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"message": str(e)}), 409
 
     return (
@@ -170,3 +159,21 @@ def unlock_users():
         return jsonify({"msg": f"{len(users)} users unlocked successfully"}), 200
     except ValueError as e:
         return jsonify({"msg": str(e)}), 404
+
+
+def optimize_file(file, user_id:str, sub_dir:str= 'profile' ):
+    user_dir = os.path.join(UPLOAD_DIR, str(user_id))
+    os.makedirs(user_dir, exist_ok=True)
+    ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
+
+    if ext not in ALLOWED_EXTENSIONS:
+        field_error("profile", "The profile must be a file  of type.jpg,png", 422)
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    original_filename = secure_filename(file.filename)
+    name, ext = os.path.splitext(original_filename)
+    new_filename = f"{name}_{timestamp}{ext}"
+    file_path = os.path.join(user_dir, new_filename)
+
+    return { 
+        "storage_path" :file_path,
+        "file_url":  f"{sub_dir}/{user_id}/{new_filename}"}

@@ -30,6 +30,7 @@ class UserCreateRequest(BaseModel):
     confirm_password: NonEmptyStr
     role: int = Field(..., ge=0, le=1)
     phone: Optional[str] = None
+    address: NonEmptyStr
     dob: Optional[date | str] = None
     profile: Any = None
 
@@ -39,15 +40,8 @@ class UserCreateRequest(BaseModel):
             raise ValueError("The Profile field is required")
         return v
 
-    address: NonEmptyStr
-
-    @field_validator("confirm_password")
-    def passwords_match(cls, v, values):
-        if "password" in values and v != values["password"]:
-            raise ValueError("Passwords do not match")
-        return v
-
     @field_validator("password")
+    @classmethod
     def strong_password(cls, v):
         if len(v) < 6 or len(v) > 20:
             raise ValueError("Password must be 6-20 characters")
@@ -63,6 +57,15 @@ class UserCreateRequest(BaseModel):
             )
         return v
 
+    @field_validator("confirm_password")
+    @classmethod
+    def passwords_match(cls, v: str, info: Any):
+        if "password" in info.data:
+            password = info.data["password"]
+            if v != password:
+                raise ValueError("Passwords do not match")
+        return v
+    
     @classmethod
     def messages(cls):
         return {

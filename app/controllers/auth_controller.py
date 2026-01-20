@@ -40,7 +40,7 @@ def login_user(payload):
         refresh_token = create_refresh_token(
             identity=user.id,
             additional_claims={"user": user_data},
-            expires_delta=timedelta(seconds=JWTConfig.JWT_REFRESH_TOKEN_EXPIRES),
+            expires_delta=timedelta(seconds=JWTConfig.JWT_REMEMBER_ME_EXPIRES),
         )
     else:
         refresh_token = create_refresh_token(
