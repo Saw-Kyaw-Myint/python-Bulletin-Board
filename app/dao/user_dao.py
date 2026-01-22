@@ -1,8 +1,9 @@
 from datetime import datetime
 
+from flask_jwt_extended import get_jwt_identity
 from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
-from flask_jwt_extended import get_jwt_identity
+
 from app.dao.base_dao import BaseDao
 from app.extension import db
 from app.models import User
@@ -15,7 +16,7 @@ class UserDao(BaseDao):
     def paginate(filters, page: int, per_page: int):
         user_id = get_jwt_identity()
         query = User.query.filter(User.deleted_at.is_(None))
-        query = query.filter(User.id!= user_id)
+        query = query.filter(User.id != user_id)
         name = (filters.get("name") or "").strip()
         email = (filters.get("email") or "").strip()
 

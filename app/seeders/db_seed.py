@@ -4,5 +4,5 @@ from app.factories.user_factory import UserFactory
 
 
 def run():
-    UserFactory.create_many(5)
-    PostFactory.create_many(5)
+    UserFactory.create_many(10)
+    PostFactory.create_many(10)

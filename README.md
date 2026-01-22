@@ -97,14 +97,32 @@ If fail use `poetry run flask db upgrade`
 flask db upgrade
 ```
 
-### 7. Run The Flask application Development
+### 7. Run The Database Seeder
+
+```
+$ flask db:seed
+```
+
+### 8. Run The Flask Application ( Development )
 
 ```
 $ flask run --debug
 ```
 
-### Run Format Before Commit
+### Seeder Information
+
+After running the seeder, you can log in using the admin account below.
 
 ```
-$ py format
+"name"     : "Admin",
+"email"    : "admin@example.com",
+"password" : "Admin123@",
+"phone"    : "09999999999",
+"address"  : "Admin Address",
+```
+
+### Code Formatting (Before Commit)
+
+```
+ $ py format
 ```

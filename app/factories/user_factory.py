@@ -10,15 +10,34 @@ fake = Faker()
 
 class UserFactory:
 
+    # create admin account
+    def create_admin():
+        admin = User.query.filter_by(email="admin@example.com").first()
+        if admin:
+            return admin
+
+        return BaseFactory.create_one(
+            lambda: {
+                "name": "Admin",
+                "email": "admin@admin.com",
+                "password": hash_password("Admin123@"),
+                "phone": "09999999999",
+                "address": "Admin Address",
+                "role": False,
+            },
+            User,
+        )
+
     def make_data():
         """Return fake user data (not saved to DB)."""
-
+        admin = UserFactory.create_admin()
         return {
             "name": fake.name(),
             "email": fake.unique.email(),
             "password": hash_password("Password123@"),
             "phone": "09451340513",
             "address": fake.address(),
+            "create_user_id": admin.id,
         }
 
     def create():
