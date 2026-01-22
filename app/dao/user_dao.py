@@ -94,13 +94,8 @@ class UserDao(BaseDao):
         db.session.commit()
 
     def delete_users(user_ids: list[int]):
-        """_Delete users_
-
-        Args:
-            user_ids (list[int]): _users ids_
-
-        Returns:
-            _list[int]_: _Deleted Users_
+        """
+        Delete users by user_ids
         """
         users = User.query.filter(
             User.id.in_(user_ids), User.deleted_at.is_(None)

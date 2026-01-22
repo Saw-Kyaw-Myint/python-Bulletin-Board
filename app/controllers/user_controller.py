@@ -24,6 +24,9 @@ UPLOAD_DIR = "public/images/profile"
 
 
 def get_users():
+    """
+    Return a paginated list of users with optional filters.
+    """
     filters = {
         "name": request.args.get("name", type=str),
         "email": request.args.get("email", type=str),
@@ -41,6 +44,9 @@ def get_users():
 
 @validate_request(UserCreateRequest)
 def create_user(payload):
+    """
+    Create User
+    """
     file = request.files.get("profile")
     payload_dict = payload.model_dump()
     if not file:
@@ -54,10 +60,7 @@ def create_user(payload):
         file.save(opt_file["storage_path"])
         db.session.commit()
 
-        return (
-            jsonify({"message": "Register success"}),
-            201,
-        )
+        return jsonify({"message": "Register success"}), 201
     except Exception as e:
         logger.error("User Controller : create_user")
         logger.error(e)
@@ -67,6 +70,9 @@ def create_user(payload):
 
 
 def show_user(user_id):
+    """
+    Get User by user id
+    """
     user = UserService.get_user(user_id)
     return jsonify(user_schema.dump(user)), 200
 
@@ -74,6 +80,9 @@ def show_user(user_id):
 # Update user
 @validate_request(UserUpdateRequest)
 def update_user(payload, id):
+    """
+    Update User Information
+    """
     file = request.files.get("profile")
     payload_dict = payload.model_dump()
     if file:

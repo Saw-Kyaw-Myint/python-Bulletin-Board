@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from app.controllers.auth_controller import login_user, logout, refresh
-from app.controllers.post_controller import post_list
+from app.controllers.post_controller import delete_posts, post_list, show_post
 from app.controllers.user_controller import (
     create_user,
     delete_users,
@@ -47,6 +47,8 @@ user_bp.post("/unlock")(unlock_users)
 # Post Route
 before_middleware(post_bp, post_middleware)
 post_bp.get("/")(post_list)
+post_bp.post("/multiple-delete")(delete_posts)
+post_bp.get("/show/<int:post_id>")(show_post)
 
 # export all Blueprint
 __all__ = ["user_bp", "auth_bp", "post_bp"]
