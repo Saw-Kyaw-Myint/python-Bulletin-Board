@@ -44,9 +44,9 @@ No need to configure following basic requirement and support example code.
 ### 1. Clone the repository
 
 ```bash
-$ git clone https://github.com/Saw-Kyaw-Myint/python-Bulletin-Board.git
+$ git clone https://github.com/Saw-Kyaw-Myint/Python-Flask-Bulletin-Board.git
 
-$ cd python-Bulletin-Board
+$ cd Python-Flask-Bulletin-Board
 ```
 
 ### 2. Install dependencies
