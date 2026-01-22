@@ -115,7 +115,7 @@ After running the seeder, you can `LogIn` using the `Admin Account` below.
 
 ```
 "name"     : "Admin",
-"email"    : "admin@example.com",
+"email"    : "admin@admin.com",
 "password" : "Admin123@",
 "phone"    : "09999999999",
 "address"  : "Admin Address",
