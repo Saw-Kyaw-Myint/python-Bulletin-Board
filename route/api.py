@@ -17,7 +17,7 @@ from config.logging import logger
 
 # ///////// implement Blueprint //////////////////////
 user_bp = Blueprint("user", __name__, url_prefix="/api/users")
-auth_bp = Blueprint("auth", __name__,url_prefix="/api")
+auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 post_bp = Blueprint("post", __name__, url_prefix="/api/posts")
 
 
