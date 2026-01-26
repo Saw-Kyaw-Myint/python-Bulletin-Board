@@ -1,3 +1,6 @@
+from marshmallow import fields
+
+from app.enum.user import UserRole
 from app.extension import ma
 from app.models.user import User
 

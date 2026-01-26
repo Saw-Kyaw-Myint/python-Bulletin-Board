@@ -1,11 +1,14 @@
-from flask import jsonify, request
+import csv
+from io import StringIO
+
+from flask import Response, jsonify, request
 from werkzeug.exceptions import HTTPException
 
 from app.extension import db
 from app.request.post_request import CreatePostRequest, UpdatePostRequest
 from app.schema.post_schema import PostSchema
 from app.service.post_service import PostService
-from app.shared.commons import paginate_response, validate_request
+from app.shared.commons import paginate_response, raise_error, validate_request
 from config.logging import logger
 
 posts_schema = PostSchema(many=True)
@@ -37,7 +40,7 @@ def create_post(payload):
     try:
         PostService.create_post(payload)
         db.session.commit()
-        return jsonify({"message": "Post creation is success."}), 201
+        return jsonify({"message": "Post creation is success."}), 200
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -80,9 +83,71 @@ def delete_posts():
         return jsonify({"msg": "Provide a list of post IDs"}), 400
     try:
         posts = PostService.delete_posts(post_ids)
-
+        db.session.commit()
         return jsonify({"msg": f"{len(posts)} posts deleted successfully"}), 200
     except ValueError as e:
+        db.session.rollback()
+        return e
+    except Exception as e:
+        db.session.rollback()
         logger.error("Post Controller : delete_posts")
         logger.error(e)
-        return jsonify({"msg": str(e)}), 404
+        return jsonify({"msg": str(e)}), 500
+
+
+def export_csv():
+    try:
+        data = request.get_json(silent=True) or {}
+        post_ids = data.get("post_ids", [])
+
+        posts = PostService.get_post_by_ids(post_ids)
+
+        if not posts:
+            raise_error("message", "Post not found.", 404)
+
+        output = StringIO()
+
+        fieldnames = [
+            "id",
+            "title",
+            "description",
+            "status",
+            "created_user_id",
+            "updated_user_id",
+            "deleted_user_id",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+        ]
+
+        writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+
+        writer.writerow(fieldnames)
+
+        for post in posts:
+            writer.writerow(
+                [
+                    post.id,
+                    post.title,
+                    post.description,
+                    post.status,
+                    post.created_user_id,
+                    post.updated_user_id,
+                    post.deleted_user_id,
+                    post.deleted_at,
+                    post.created_at,
+                    post.updated_at,
+                ]
+            )
+
+        response = Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": "attachment; filename=posts.csv"},
+        )
+
+        return response
+    except Exception as e:
+        logger.error("Post Controller : export_csv")
+        logger.error(e)
+        return jsonify({"message": str(e)}), 500

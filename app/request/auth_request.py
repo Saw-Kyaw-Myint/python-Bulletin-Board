@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -11,19 +12,12 @@ class LoginRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def strong_password(cls, v: str) -> str:
-        """Validate password strength."""
         if not v:
             return v
-        if len(v) < 6 or len(v) > 20:
-            raise ValueError()
-        if not any(c.isupper() for c in v):
-            raise ValueError()
-        if not any(c.islower() for c in v):
-            raise ValueError()
-        if not any(c.isdigit() for c in v):
-            raise ValueError()
-        if not any(c in "@$!%*?&" for c in v):
-            raise ValueError()
+        if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,20}", v):
+            raise ValueError(
+                "Password must be 6–20 chars and include upper, lower, number, and special character"
+            )
         return v
 
     @classmethod

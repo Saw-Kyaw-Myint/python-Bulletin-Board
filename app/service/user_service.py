@@ -1,3 +1,5 @@
+from flask_jwt_extended import get_jwt_identity
+
 from app.dao.user_dao import UserDao
 from app.models import User
 from app.service.base_service import BaseService
@@ -13,9 +15,6 @@ class UserService(BaseService):
         users = UserDao.paginate(filters, page, per_page)
         return users
 
-    def list():
-        return UserDao.get_all()
-
     def get_user(user_id):
         user = UserDao.get_user(user_id)
         if not user:
@@ -23,10 +22,10 @@ class UserService(BaseService):
         return user
 
     def create(payload):
-        if UserDao.get_by_name(payload["name"]):
+        if UserDao.find_one(name=payload["name"]):
             field_error("name", "Name already exists", 402)
 
-        if UserDao.get_by_email(payload["email"]):
+        if UserDao.find_one(email=payload["email"]):
             field_error("email", "Email already exists", 402)
 
         user = User(
@@ -44,23 +43,23 @@ class UserService(BaseService):
         return UserDao.create(user)
 
     def update(payload, id):
-        user = UserDao.get_by_id(id)
+        user = UserDao.find_one(id=id, include_deleted=False)
         if not user:
             field_error("internal_error", "Email  don't exists", 402)
 
-        exist_name = UserDao.get_by_name(payload["name"])
-        exist_email = UserDao.get_by_email(payload["email"])
+        exist_name = UserDao.find_one(name=payload["name"])
+        exist_email = UserDao.find_one(email=payload["email"])
         if exist_name and exist_name.name != user.name:
             field_error("name", "Name already exists", 402)
 
-        if UserDao.get_by_email(payload["email"]) and exist_email.email != user.email:
+        if UserDao.find_one(email=payload["email"]) and exist_email.email != user.email:
             field_error("email", "Email already exists", 402)
 
         user.name = payload["name"]
         user.email = payload["email"]
         user.role = payload["role"]
         user.address = payload["address"]
-        user.updated_user_id = payload["user_id"]
+        user.updated_user_id = get_jwt_identity()
 
         if payload.get("password"):
             user.password = hash_password(payload["password"])
@@ -68,13 +67,6 @@ class UserService(BaseService):
         if payload.get("profile"):
             user.profile_path = payload["profile"]
         return user
-
-    def delete(user_id):
-        user = UserDao.get_by_id(user_id)
-        if not user:
-            return False
-        UserDao.delete(user)
-        return True
 
     def delete_users(user_ids):
         """_Delete Users_

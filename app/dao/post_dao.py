@@ -72,11 +72,14 @@ class PostDao(BaseDao):
         ).all()
         for post in posts:
             post.soft_delete()
-        db.session.commit()
         return posts
 
     def get_by_title(title, post_id):
         """
-        Get post by title
+        Get post by title without post_id
         """
         return Post.query.filter(Post.title == title, Post.id != post_id).first()
+
+    def get_post_by_ids(post_ids):
+
+        return Post.query.filter(Post.id.in_(post_ids)).all()

@@ -1,6 +1,7 @@
 # app/factories/user_factory.py
 from faker import Faker
 
+from app.enum.user import UserRole
 from app.factories.base_factory import BaseFactory
 from app.models import User
 from app.utils.hash import hash_password
@@ -23,7 +24,7 @@ class UserFactory:
                 "password": hash_password("Admin123@"),
                 "phone": "09999999999",
                 "address": "Admin Address",
-                "role": False,
+                "role": UserRole.ADMIN.value,
             },
             User,
         )

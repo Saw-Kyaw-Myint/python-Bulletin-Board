@@ -1929,6 +1929,21 @@ docs = ["autodocsumm (==0.2.14)", "furo (==2025.12.19)", "sphinx (==8.2.3)", "sp
 tests = ["pytest", "simplejson"]
 
 [[package]]
+name = "marshmallow-enum"
+version = "1.5.1"
+description = "Enum field for Marshmallow"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "marshmallow-enum-1.5.1.tar.gz", hash = "sha256:38e697e11f45a8e64b4a1e664000897c659b60aa57bfa18d44e226a9920b6e58"},
+    {file = "marshmallow_enum-1.5.1-py2.py3-none-any.whl", hash = "sha256:57161ab3dbfde4f57adeb12090f39592e992b9c86d206d02f6bd03ebec60f072"},
+]
+
+[package.dependencies]
+marshmallow = ">=2.0.0"
+
+[[package]]
 name = "marshmallow-sqlalchemy"
 version = "1.4.2"
 description = "SQLAlchemy integration with the marshmallow (de)serialization library"
@@ -4051,4 +4066,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "9fdd21f589fc4a5418a94e67132758c6ac096022c1b5fc674a877c99e90244e6"
+content-hash = "99b4538e98cb363f482024bc3c70609c5c4e81ed8a17e8bac8e2792ab9baf3b3"

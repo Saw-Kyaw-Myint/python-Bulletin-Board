@@ -7,53 +7,52 @@ from sqlalchemy.orm import joinedload
 from app.dao.base_dao import BaseDao
 from app.extension import db
 from app.models import User
+from app.models.scopes import UserScopes
 from config.logging import logger
 
 
 class UserDao(BaseDao):
     """Handles direct database operations"""
 
+    def find_one(include_deleted=False, **filters):
+        """
+        To Search specific column
+        """
+        query = User.query
+
+        if not include_deleted:
+            query = query.filter(User.deleted_at.is_(None))
+
+        return query.filter_by(**filters).first()
+
+    def is_valid_user(email: str):
+        """
+        Search unlock user with email
+        """
+        return User.query.filter_by(
+            email=email, deleted_at=None, lock_flg=False
+        ).first()
+
     def paginate(filters, page: int, per_page: int):
+        """
+        Paginate User records with optional filters for name, email, role, and creation date.
+        """
         user_id = get_jwt_identity()
-        query = User.query.filter(User.deleted_at.is_(None))
-        query = query.filter(User.id != user_id)
-        name = (filters.get("name") or "").strip()
-        email = (filters.get("email") or "").strip()
+        query = User.query
 
-        if name or email:
-            or_conditions = []
-            if name:
-                or_conditions.append(User.name.ilike(f"%{name}%"))
-            if email:
-                or_conditions.append(User.email.ilike(f"%{email}%"))
-            query = query.filter(or_(*or_conditions))
+        # --- Apply scopes from UserScopes ---
+        query = UserScopes.active(query, exclude_user_id=user_id)
+        query = UserScopes.filter_name_email(query, filters)
+        query = UserScopes.filter_role(query, filters)
+        query = UserScopes.filter_date(query, filters)
 
-        # --- ROLE FILTER ---
-        if filters.get("role") is not None:
-            query = query.filter(User.role == filters["role"])
-
-        # --- DATE FILTER ---
-        start_date = filters.get("start_date")
-        end_date = filters.get("end_date")
-        try:
-            if start_date:
-                start = datetime.fromisoformat(start_date)
-                query = query.filter(User.created_at >= start)
-
-            if end_date:
-                end = datetime.fromisoformat(end_date)
-                query = query.filter(User.created_at <= end)
-
-        except ValueError as e:
-            logger.error(f"Invalid date format: {e}")
-
-        # --- ORDER & PAGINATE ---
-        return query.order_by(User.created_at.desc()).paginate(
+        return query.order_by(User.id.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
 
-    def find_by_email(email: str):
-        return User.query.filter_by(email=email, deleted_at=None).first()
+    def create(user: User):
+        db.session.add(user)
+        return user
 
     def get_user(user_id: int):
         return (
@@ -62,35 +61,7 @@ class UserDao(BaseDao):
             .first()
         )
 
-    def is_valid_user(email: str):
-        return User.query.filter_by(
-            email=email, deleted_at=None, lock_flg=False
-        ).first()
-
-    def update_last_login():
-        return User.query.filter_by(email=email, deleted_at=None).first()
-
-    def get_all():
-        return User.query.all()
-
-    def get_by_id(user_id: int):
-        return User.query.get(user_id)
-
-    def get_by_email(email: str):
-        return User.query.filter_by(email=email).first()
-
-    def get_by_name(name: str):
-        return User.query.filter_by(name=name).first()
-
-    def create(user: User):
-        db.session.add(user)
-        return user
-
     def update():
-        db.session.commit()
-
-    def delete(user: User):
-        user.soft_delete()
         db.session.commit()
 
     def delete_users(user_ids: list[int]):

@@ -110,6 +110,18 @@ def field_error(field: str, message: str, status_code: int = 400):
     abort(response)
 
 
+def raise_error(name: str, message: str, status_code: int = 400):
+    """
+    Raise a JSON error for a specific raise_error.
+
+    :param raise_error: raise_error name (e.g., 'message' or 'message')
+    :param message: Error message
+    :param status_code: HTTP status code
+    """
+    response = make_response(jsonify({"errors": {name: message}}), status_code)
+    abort(response)
+
+
 def paginate_response(pagination: Any, schema: Schema) -> Response:
     """
     Return a standard JSON response for paginated data.

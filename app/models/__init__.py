@@ -3,17 +3,8 @@ Package `app.models`
 
 This package contains all database models for the application.
 It exposes the main models through `__all__` for easy import.
-
-Modules:
-    - user: Defines the `User` model.
-    - post: Defines the `Post` model.
-
-Exports:
-    - User: The User model class.
-    - Post: The Post model class.
-
 Usage:
-    from app.models import User, Post
+    from app.models import User, Post,etc..
 """
 
 from .password_reset import PasswordReset

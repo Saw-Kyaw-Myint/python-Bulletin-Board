@@ -1,5 +1,6 @@
 # app/request/user_request.py
 import os
+import re
 from datetime import date
 from typing import Any, Optional
 
@@ -42,18 +43,12 @@ class UserCreateRequest(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def strong_password(cls, v):
-        if len(v) < 6 or len(v) > 20:
-            raise ValueError("Password must be 6-20 characters")
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must include at least one uppercase letter")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must include at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must include at least one number")
-        if not any(c in "@$!%*?&" for c in v):
+    def strong_password(cls, v: str) -> str:
+        if not v:
+            return v
+        if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,20}", v):
             raise ValueError(
-                "Password must include at least one special character @$!%*?&"
+                "Password must be 6–20 chars and include upper, lower, number, and special character"
             )
         return v
 
@@ -90,7 +85,6 @@ class UserUpdateRequest(BaseModel):
     Schema for validating user creation requests.
     """
 
-    user_id: int
     name: NonEmptyStr
     email: EmailStr = Field(..., max_length=50)
     password: str = None
@@ -101,22 +95,21 @@ class UserUpdateRequest(BaseModel):
     profile: Any = None
     address: NonEmptyStr
 
+    @field_validator("profile")
+    def file_required(cls, v):
+        if not v:
+            raise ValueError("The Profile field is required")
+        return v
+
     @field_validator("password")
     @classmethod
     def strong_password(cls, v: str) -> str:
-        """Validate password strength."""
         if not v:
             return v
-        if len(v) < 6 or len(v) > 20:
-            raise ValueError("Password must be 6-20 characters")
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must include at least one uppercase letter")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must include at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must include at least one number")
-        if not any(c in "@$!%*?&" for c in v):
-            raise ValueError("Password must include at least one special character")
+        if not re.fullmatch(r"(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,20}", v):
+            raise ValueError(
+                "Password must be 6–20 chars and include upper, lower, number, and special character"
+            )
         return v
 
     @field_validator("confirm_password")

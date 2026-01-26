@@ -1,5 +1,7 @@
 from marshmallow import fields
+from marshmallow_enum import EnumField
 
+from app.enum.user import LockStatus, UserRole
 from app.extension import ma
 from app.models import User
 

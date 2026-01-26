@@ -67,3 +67,6 @@ class PostService(BaseService):
         if not posts:
             raise ValueError("not user found")
         return posts
+
+    def get_post_by_ids(post_ids):
+        return PostDao.get_post_by_ids(post_ids)

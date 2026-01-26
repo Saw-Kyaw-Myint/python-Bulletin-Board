@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from app.enum.user import LockStatus, UserRole
 from app.extension import db
 
 
@@ -15,11 +16,11 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255))
     profile_path = db.Column(db.String(255))
-    role = db.Column(db.Boolean, default=True)
+    role = db.Column(db.Integer, nullable=False, default=UserRole.USER.value)
     dob = db.Column(db.DateTime)
     phone = db.Column(db.String(20))
     address = db.Column(db.String(255))
-    lock_flg = db.Column(db.Boolean, default=False)
+    lock_flg = db.Column(db.Integer, nullable=False, default=LockStatus.UNLOCKED.value)
     lock_count = db.Column(db.Integer, default=False)
     last_lock_at = db.Column(db.DateTime)
     last_login_at = db.Column(db.DateTime)

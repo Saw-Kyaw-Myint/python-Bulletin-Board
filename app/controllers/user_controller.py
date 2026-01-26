@@ -3,6 +3,7 @@ from datetime import datetime
 
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity
+from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 
 from app.extension import db
@@ -12,6 +13,7 @@ from app.schema.user_list_schema import UserListSchema
 from app.schema.user_schema import UserSchema
 from app.service.user_service import UserService
 from app.shared.commons import field_error, paginate_response, validate_request
+from app.utils.log import log_handler
 from config.logging import logger
 
 user_schema = UserSchema()
@@ -27,19 +29,23 @@ def get_users():
     """
     Return a paginated list of users with optional filters.
     """
-    filters = {
-        "name": request.args.get("name", type=str),
-        "email": request.args.get("email", type=str),
-        "role": request.args.get("role", type=int),
-        "start_date": request.args.get("start_date"),
-        "end_date": request.args.get("end_date"),
-    }
+    try:
+        filters = {
+            "name": request.args.get("name", type=str),
+            "email": request.args.get("email", type=str),
+            "role": request.args.get("role", type=int),
+            "start_date": request.args.get("start_date"),
+            "end_date": request.args.get("end_date"),
+        }
 
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 10, type=int)
-    pagination = UserService.filter_paginate(filters, page, per_page)
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+        pagination = UserService.filter_paginate(filters, page, per_page)
 
-    return paginate_response(pagination, user_list)
+        return paginate_response(pagination, user_list)
+    except Exception as e:
+        log_handler("error", "User Controller : get_users", e)
+        return jsonify({"message": str(e)}), 500
 
 
 @validate_request(UserCreateRequest)
@@ -66,7 +72,7 @@ def create_user(payload):
         logger.error(e)
         db.session.rollback()
 
-        return jsonify({"message": str(e)}), 409
+        return jsonify({"message": str(e)}), 500
 
 
 def show_user(user_id):
@@ -86,7 +92,7 @@ def update_user(payload, id):
     file = request.files.get("profile")
     payload_dict = payload.model_dump()
     if file:
-        user_id = payload_dict["user_id"]
+        user_id = get_jwt_identity()
         opt_file = optimize_file(file, user_id)
         file_path = opt_file["storage_path"]
         payload_dict["profile"] = opt_file["file_url"]
@@ -98,13 +104,14 @@ def update_user(payload, id):
         db.session.commit()
         user = auth_schema.dump(user)
 
-        return jsonify({"message": "user update is success", "user": user}), 201
+        return jsonify({"message": "user update is success", "user": user}), 200
+    except HTTPException as e:
+        return e
     except Exception as e:
-        logger.error("User Controller : update_user")
-        logger.error(e)
+        log_handler("error", "User Controller", e)
         db.session.rollback()
 
-        return jsonify({"message": str(e)}), 409
+        return jsonify({"message": str(e)}), 500
 
 
 def delete_users():
@@ -121,6 +128,8 @@ def delete_users():
         users = UserService.delete_users(user_ids)
         return jsonify({"msg": f"{len(users)} users deleted successfully"}), 200
     except ValueError as e:
+        return jsonify({"msg": str(e)})
+    except Exception as e:
         return jsonify({"msg": str(e)}), 404
 
 
