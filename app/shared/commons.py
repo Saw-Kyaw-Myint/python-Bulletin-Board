@@ -1,5 +1,6 @@
 from functools import wraps
 from typing import Any
+import os
 
 from flask import abort, jsonify, make_response, request
 from flask.wrappers import Response
@@ -8,6 +9,7 @@ from pydantic import ValidationError
 
 from config.logging import logger
 
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 50))
 
 def validate_request(schema):
     def decorator(fn):

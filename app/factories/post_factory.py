@@ -12,15 +12,15 @@ class PostFactory:
         """Return fake post data (not saved to DB)."""
 
         user = User.query.order_by(db.func.random()).first()
-        user_id = user.id if user else 1  # fallback to 1 if no user
+        user_id = user.id if user else 1
 
         return {
             "title": fake.unique.sentence(nb_words=6),
             "description": fake.text(max_nb_chars=500),
-            "status": fake.random_element(elements=(0, 1, 2)),  # e.g., draft/published
+            "status": fake.random_element(elements=(0, 1)),
             "create_user_id": user_id,
             "updated_user_id": user_id,
-            "deleted_user_id": None,  # default not deleted
+            "deleted_user_id": None, 
         }
 
     def create():

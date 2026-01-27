@@ -23,6 +23,7 @@ from app.utils.token import (
 )
 from config.jwt import JWTConfig
 from config.logging import logger
+from app.utils.log  import log_handler
 
 auth_schema = AuthSchema()
 
@@ -54,10 +55,10 @@ def refresh():
         user = UserService.get_user(user_id)
         user_data = auth_schema.dump(user)
         if is_refresh_token_revoked(old_refresh_token):
-            return {"msg": "Refresh token invalid."}, 402
+            return {"msg": "Refresh token invalid."}, 403
 
         if not user:
-            return {"msg": "Invalid identity."}, 404
+            return {"msg": "Invalid identity."}, 403
         revoke_refresh_token(old_refresh_token)
         new_access_token = create_access_token(
             identity=str(user_id), additional_claims={"user": user_data}
@@ -69,8 +70,7 @@ def refresh():
 
         return resp, 200
     except Exception as e:
-        logger.error("Auth Controller : refresh")
-        logger.error(e)
+        log_handler("error","Auth Controller : refresh =>",e)
         db.session.rollback()
         return jsonify({"message": str(e)}), 409
 

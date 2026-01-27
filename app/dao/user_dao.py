@@ -96,13 +96,8 @@ class UserDao(BaseDao):
         return users
 
     def unlock_users(user_ids: list[int]):
-        """_ unLock multiple users by updating lock_flg, last_lock_at_
-
-        Args:
-            user_ids (list[int]): _users ids_
-
-        Returns:
-            _list[int]_: _unlocked users_
+        """
+         UnLock multiple users by updating lock_flg, last_lock_at_
         """
         users = User.query.filter(
             User.id.in_(user_ids), User.deleted_at.is_(None)

@@ -1,5 +1,5 @@
 from flask_jwt_extended import get_jwt_identity
-
+from flask import jsonify
 from app.dao.post_dao import PostDao
 from app.models.post import Post
 from app.service.base_service import BaseService
@@ -20,7 +20,7 @@ class PostService(BaseService):
         user_id = get_jwt_identity()
         post = PostDao.get_by_title(payload.title)
         if post:
-            field_error("title", "The Title is  already exists.", 402)
+            field_error("title", "The Title is  already exists.", 400)
 
         post = Post(
             title=payload.title,
@@ -51,7 +51,7 @@ class PostService(BaseService):
             field_error("post", "Post not found.", 404)
         existing_post = PostDao.get_by_title(payload.title, id)
         if existing_post:
-            field_error("title", "The Title is  already exists.", 402)
+            field_error("title", "The Title is  already exists.", 400)
         post.title = payload.title
         post.description = payload.description
         post.status = payload.status
@@ -59,14 +59,20 @@ class PostService(BaseService):
 
         return post
 
-    def delete_posts(post_ids):
+    def delete_posts(payload):
         """
         Delete posts by IDs.
         """
-        posts = PostDao.delete_posts(post_ids)
-        if not posts:
-            raise ValueError("not user found")
+        select_all = payload.get("all", False)
+        post_ids = payload.get("post_ids", [])
+        exclude_ids = payload.get("exclude_ids", [])
+        if select_all:
+            posts = PostDao.delete_all_posts(select_all=True, exclude_ids=exclude_ids)
+        else:
+            if not isinstance(post_ids, list) or not post_ids:
+                raise ValueError("Provide post id list.")
+            posts = PostDao.delete_posts(post_ids)
         return posts
-
+     
     def get_post_by_ids(post_ids):
         return PostDao.get_post_by_ids(post_ids)

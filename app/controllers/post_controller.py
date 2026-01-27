@@ -10,6 +10,7 @@ from app.schema.post_schema import PostSchema
 from app.service.post_service import PostService
 from app.shared.commons import paginate_response, raise_error, validate_request
 from config.logging import logger
+from app.utils.log import log_handler
 
 posts_schema = PostSchema(many=True)
 post_schema = PostSchema()
@@ -40,12 +41,13 @@ def create_post(payload):
     try:
         PostService.create_post(payload)
         db.session.commit()
-        return jsonify({"message": "Post creation is success."}), 200
+        return jsonify({"msg": "Post creation is success."}), 200
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.exception(e)
-        return jsonify({"message": "Internal server error"}), 500
+        db.session.rollback()
+        log_handler('error', "Post Controller : create_post =>",e)
+        return jsonify({"msg": str(e)}), 500
 
 
 def show_post(post_id):
@@ -58,44 +60,45 @@ def show_post(post_id):
 
 @validate_request(UpdatePostRequest)
 def update_post(payload, id):
+    """
+    Update post
+    """
     try:
         post = PostService.update_post(payload, id)
         db.session.commit()
-        return jsonify({"message": f"{(post.id)} Post update successfully"}), 200
+        return jsonify({"msg": f"{(post.id)} Post update successfully"}), 200
     except HTTPException as e:
-        db.session.rollback()
         return e
     except Exception as e:
         db.session.rollback()
-        logger.error(e)
-        return jsonify({"message": "Internal server error"}), 500
+        log_handler("error", "Post Controller: update_post",e)
+        return jsonify({"msg": str(e)}), 500
 
 
 def delete_posts():
-    """_Delete posts_
-
-    Returns:
-        _json_: _Error or Success_
     """
-    data = request.get_json() or {}
-    post_ids = data.get("post_ids")
-    if not isinstance(post_ids, list) or not post_ids:
-        return jsonify({"msg": "Provide a list of post IDs"}), 400
+      Delete posts
+    """
+    payload = request.get_json(silent=True)
+    if not payload:
+        return jsonify({"msg": "empty data"}), 400
     try:
-        posts = PostService.delete_posts(post_ids)
+        posts = PostService.delete_posts(payload)
         db.session.commit()
-        return jsonify({"msg": f"{len(posts)} posts deleted successfully"}), 200
+        return jsonify({"msg": f"{posts} posts deleted successfully"}), 200
     except ValueError as e:
         db.session.rollback()
-        return e
+        raise e
     except Exception as e:
         db.session.rollback()
-        logger.error("Post Controller : delete_posts")
-        logger.error(e)
+        log_handler('error',"Post Controller : delete_posts",e)
         return jsonify({"msg": str(e)}), 500
 
 
 def export_csv():
+    """
+      Export CSV
+    """
     try:
         data = request.get_json(silent=True) or {}
         post_ids = data.get("post_ids", [])
@@ -103,7 +106,7 @@ def export_csv():
         posts = PostService.get_post_by_ids(post_ids)
 
         if not posts:
-            raise_error("message", "Post not found.", 404)
+            raise_error("msg", "Post not found.", 404)
 
         output = StringIO()
 
@@ -148,6 +151,5 @@ def export_csv():
 
         return response
     except Exception as e:
-        logger.error("Post Controller : export_csv")
-        logger.error(e)
+        log_handler('error', "Post Controller : export_csv =>",e)
         return jsonify({"message": str(e)}), 500

@@ -23,10 +23,10 @@ class UserService(BaseService):
 
     def create(payload):
         if UserDao.find_one(name=payload["name"]):
-            field_error("name", "Name already exists", 402)
+            field_error("name", "Name already exists", 400)
 
         if UserDao.find_one(email=payload["email"]):
-            field_error("email", "Email already exists", 402)
+            field_error("email", "Email already exists", 400)
 
         user = User(
             name=payload["name"],
@@ -45,15 +45,15 @@ class UserService(BaseService):
     def update(payload, id):
         user = UserDao.find_one(id=id, include_deleted=False)
         if not user:
-            field_error("internal_error", "Email  don't exists", 402)
+            field_error("internal_error", "Email  don't exists", 400)
 
         exist_name = UserDao.find_one(name=payload["name"])
         exist_email = UserDao.find_one(email=payload["email"])
         if exist_name and exist_name.name != user.name:
-            field_error("name", "Name already exists", 402)
+            field_error("name", "Name already exists", 400)
 
         if UserDao.find_one(email=payload["email"]) and exist_email.email != user.email:
-            field_error("email", "Email already exists", 402)
+            field_error("email", "Email already exists", 400)
 
         user.name = payload["name"]
         user.email = payload["email"]

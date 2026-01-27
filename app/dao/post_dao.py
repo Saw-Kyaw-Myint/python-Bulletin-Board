@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import batched
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import joinedload
@@ -7,6 +8,7 @@ from app.dao.base_dao import BaseDao
 from app.extension import db
 from app.models.post import Post
 from config.logging import logger
+from app.shared.commons  import BATCH_SIZE
 
 
 class PostDao(BaseDao):
@@ -65,20 +67,42 @@ class PostDao(BaseDao):
 
     def delete_posts(post_ids: list[int]):
         """
-        Delete posts by post ids
+           Soft delete posts by post ids in batches
         """
-        posts = Post.query.filter(
-            Post.id.in_(post_ids), Post.deleted_at.is_(None)
-        ).all()
-        for post in posts:
-            post.soft_delete()
-        return posts
+        deleted_count = 0
+        for batch in batched(post_ids, BATCH_SIZE):
+            logger.info(batch)
+            posts = Post.query.filter(
+                Post.id.in_(batch), Post.deleted_at.is_(None)
+            ).all()
+            for post in posts:
+                post.soft_delete()
+                deleted_count +=1
+        return deleted_count
 
-    def get_by_title(title, post_id):
+    def delete_all_posts(select_all=False, exclude_ids=None):
         """
-        Get post by title without post_id
+        Delete all posts or all except exclude_ids.
         """
-        return Post.query.filter(Post.title == title, Post.id != post_id).first()
+        logger.info('all delete post')
+        query = Post.query.filter(Post.deleted_at.is_(None))
+        if select_all:
+            if exclude_ids:
+                query = query.filter(~Post.id.in_(exclude_ids))
+        else:
+            return []
+        updated_count = query.update({"deleted_at": datetime.utcnow()}, synchronize_session=False)
+        db.session.flush()
+        return updated_count
+
+    def get_by_title(title, post_id = None):
+        """
+            Get a post by title, optionally excluding a specific post_id
+        """
+        query =  Post.query.filter(Post.title == title)
+        if post_id:
+            query = Post.query.filter( Post.id != post_id)
+        return query.first()
 
     def get_post_by_ids(post_ids):
 
