@@ -58,7 +58,7 @@ class PostDao(BaseDao):
                 deleted_count += 1
         return deleted_count
 
-    def delete_all_posts(exclude_ids):
+    def delete_all_posts(exclude_ids: list[int]):
         """
         Delete all posts or all except exclude_ids.
         """
@@ -71,7 +71,7 @@ class PostDao(BaseDao):
         db.session.flush()
         return deleted_count
 
-    def get_by_title(title, post_id=None):
+    def get_by_title(title: str, post_id=None):
         """
         Get a post by title, optionally excluding a specific post_id
         """
@@ -80,8 +80,24 @@ class PostDao(BaseDao):
             query = Post.query.filter(Post.id != post_id)
         return query.first()
 
-    def get_post_by_ids(post_ids):
+    def get_post_by_ids(post_ids: list[int]):
         """
         Get posts by using post_ids
         """
         return Post.query.filter(Post.id.in_(post_ids)).all()
+
+    def stream_all_posts(exclude_ids: list[int]):
+        """
+        Stream all posts using batch loading.
+        """
+        query = Post.query.filter(Post.deleted_at.is_(None))
+        if exclude_ids:
+            query = query.filter(~Post.id.in_(exclude_ids))
+        return query.yield_per(1000)
+
+    def stream_posts_by_ids(post_ids, all=False):
+        """
+        Stream posts by a list of post IDs using batch loading.
+        """
+        query = Post.query.filter(Post.id.in_(post_ids))
+        return query.yield_per(1000)

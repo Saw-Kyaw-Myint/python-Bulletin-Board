@@ -4,9 +4,9 @@ from app.controllers.auth_controller import login_user, logout, refresh
 from app.controllers.post_controller import (
     create_post,
     delete_posts,
-    export_csv,
     post_list,
     show_post,
+    stream_csv_export,
     update_post,
 )
 from app.controllers.user_controller import (
@@ -58,7 +58,7 @@ post_bp.get("/show/<int:post_id>")(show_post)
 post_bp.post("/create")(create_post)
 post_bp.put("/update/<int:id>")(update_post)
 post_bp.post("/multiple-delete")(delete_posts)
-post_bp.post("/export/csv")(export_csv)
+post_bp.post("/export/csv")(stream_csv_export)
 
 
 # export all Blueprint

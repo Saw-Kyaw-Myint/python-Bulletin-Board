@@ -1,7 +1,7 @@
 import csv
 from io import StringIO
 
-from flask import Response, jsonify, request
+from flask import Response, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
 from app.extension import db
@@ -97,61 +97,19 @@ def delete_posts():
         return jsonify({"msg": str(e)}), 500
 
 
-def export_csv():
+def stream_csv_export():
     """
     Export CSV
     """
     try:
-        data = request.get_json(silent=True) or {}
-        post_ids = data.get("post_ids", [])
+        payload = request.get_json(silent=True) or {}
+        generator = PostService.export_posts_csv(payload)
 
-        posts = PostService.get_post_by_ids(post_ids)
-
-        if not posts:
-            raise_error("msg", "Post not found.", 404)
-
-        output = StringIO()
-
-        fieldnames = [
-            "id",
-            "title",
-            "description",
-            "status",
-            "created_user_id",
-            "updated_user_id",
-            "deleted_user_id",
-            "deleted_at",
-            "created_at",
-            "updated_at",
-        ]
-
-        writer = csv.writer(output, quoting=csv.QUOTE_ALL)
-
-        writer.writerow(fieldnames)
-
-        for post in posts:
-            writer.writerow(
-                [
-                    post.id,
-                    post.title,
-                    post.description,
-                    post.status,
-                    post.created_user_id,
-                    post.updated_user_id,
-                    post.deleted_user_id,
-                    post.deleted_at,
-                    post.created_at,
-                    post.updated_at,
-                ]
-            )
-
-        response = Response(
-            output.getvalue(),
+        return Response(
+            stream_with_context(generator),
             mimetype="text/csv",
             headers={"Content-Disposition": "attachment; filename=posts.csv"},
         )
-
-        return response
     except Exception as e:
-        log_handler("error", "Post Controller : export_csv =>", e)
+        log_handler("error", "Post Controller : stream_csv_export =>", e)
         return jsonify({"message": str(e)}), 500

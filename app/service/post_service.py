@@ -6,6 +6,8 @@ from app.extension import db
 from app.models.post import Post
 from app.service.base_service import BaseService
 from app.shared.commons import field_error
+from app.utils.csv import CSV
+from config.logging import logger
 
 
 class PostService(BaseService):
@@ -80,3 +82,17 @@ class PostService(BaseService):
         Get posts by using post_ids
         """
         return PostDao.get_post_by_ids(post_ids)
+
+    def export_posts_csv(payload):
+        """
+        Stream Export CSV
+        """
+        select_all = payload.get("all", False)
+        post_ids = payload.get("post_ids", [])
+        exclude_ids = payload.get("exclude_ids", [])
+        if select_all:
+            posts = PostDao.stream_all_posts(exclude_ids)
+        else:
+            posts = PostDao.stream_posts_by_ids(post_ids)
+        stream_posts = CSV.post_csv_generator(posts)
+        return stream_posts
