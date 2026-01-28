@@ -28,9 +28,9 @@ class UserScopes:
         if name or email:
             conditions = []
             if name:
-                conditions.append(User.name.ilike(f"%{name}%"))
+                conditions.append(User.name.like(f"%{name}%"))
             if email:
-                conditions.append(User.email.ilike(f"%{email}%"))
+                conditions.append(User.email.like(f"%{email}%"))
             query = query.filter(or_(*conditions))
         return query
 

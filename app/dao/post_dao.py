@@ -77,7 +77,7 @@ class PostDao(BaseDao):
         """
         query = Post.query.filter(Post.title == title)
         if post_id:
-            query = Post.query.filter(Post.id != post_id)
+            query = query.filter(Post.id != post_id)
         return query.first()
 
     def get_post_by_ids(post_ids: list[int]):

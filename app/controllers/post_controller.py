@@ -1,6 +1,8 @@
-import csv
-from io import StringIO
+import json
+import os
+import tempfile
 
+import redis
 from flask import Response, jsonify, request, stream_with_context
 from werkzeug.exceptions import HTTPException
 
@@ -9,7 +11,9 @@ from app.request.post_request import CreatePostRequest, UpdatePostRequest
 from app.schema.post_schema import PostSchema
 from app.service.post_service import PostService
 from app.shared.commons import paginate_response, raise_error, validate_request
+from app.task.import_posts import import_posts_from_csv
 from app.utils.log import log_handler
+from config.celery import CeleryConfig
 from config.logging import logger
 
 posts_schema = PostSchema(many=True)
@@ -113,3 +117,46 @@ def stream_csv_export():
     except Exception as e:
         log_handler("error", "Post Controller : stream_csv_export =>", e)
         return jsonify({"message": str(e)}), 500
+
+
+def import_csv():
+    try:
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"msg": "CSV file required"}), 400
+        filename = file.filename
+        ext = os.path.splitext(filename)[1].lower()
+        if ext != ".csv":
+            return jsonify({"msg": "Only CSV files are allowed"}), 400
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+        file.save(tmp.name)
+        task = import_posts_from_csv.delay(tmp.name)
+
+        return jsonify({"msg": "Import started", "task_id": task.id}), 200
+    except Exception as e:
+        log_handler("error", "Post Controller :  import csv =>", e)
+        return jsonify({"msg": str(e)}), 500
+
+
+r = redis.Redis.from_url(f"{CeleryConfig.REDIS_URL}/1")
+
+
+def csv_progress(task_id):
+    """
+    Get CSV upload progress from redis
+
+    :param task_id: Description
+    """
+    progress = r.get(f"csv_progress:{task_id}")
+    status = r.get(f"csv_status:{task_id}")
+    errors = r.get(f"csv_errors:{task_id}")
+
+    response = {
+        "progress": int(progress) if progress else 0,
+        "status": status.decode() if status else "PENDING",
+    }
+
+    if response["status"] == "FAILURE":
+        response["errors"] = json.loads(errors.decode()) if errors else []
+
+    return jsonify(response)

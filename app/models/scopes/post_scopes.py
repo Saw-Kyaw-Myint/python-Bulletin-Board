@@ -26,10 +26,10 @@ class PostScopes:
             conditions = []
 
             if title:
-                conditions.append(Post.title.ilike(f"%{title}%"))
+                conditions.append(Post.title.like(f"%{title}%"))
 
             if description:
-                conditions.append(Post.description.ilike(f"%{description}%"))
+                conditions.append(Post.description.like(f"%{description}%"))
 
             query = query.filter(or_(*conditions))
 

@@ -4,9 +4,11 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
+from app.celery import celery_init_app
 from app.cli import register_commands
 from app.exceptions.handler import register_error_handlers
 from app.extension import db, limiter, ma, migrate
+from config.celery import CeleryConfig
 from config.cors import CORS_CONFIG
 from config.database import DatabaseConfig
 from config.jwt import JWTConfig
@@ -24,13 +26,14 @@ CORS(app, **CORS_CONFIG)
 # ///// setup database and jwt ///////////////////
 app.config.from_object(DatabaseConfig)
 app.config.from_object(JWTConfig)
+app.config.from_object(CeleryConfig)
 
 # /////// Initialize extensions ////////////
 db.init_app(app)
 migrate.init_app(app, db)
 limiter.init_app(app)
 ma.init_app(app)
-
+celery_app = celery_init_app(app)
 # JWT
 jwt = JWTManager(app)
 

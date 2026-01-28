@@ -30,12 +30,15 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 from app.shared.database import softDelete, timeStamp
+from config.celery import CeleryConfig
 
 # Initialize Flask extensions
 db = SQLAlchemy()
 migrate = Migrate()
 ma = Marshmallow()
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(
+    key_func=get_remote_address, storage_uri=f"{CeleryConfig.REDIS_URL}/1"
+)
 
 db.timeStamp = timeStamp
 db.softDelete = softDelete

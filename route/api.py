@@ -3,7 +3,9 @@ from flask import Blueprint, jsonify, request
 from app.controllers.auth_controller import login_user, logout, refresh
 from app.controllers.post_controller import (
     create_post,
+    csv_progress,
     delete_posts,
+    import_csv,
     post_list,
     show_post,
     stream_csv_export,
@@ -39,7 +41,6 @@ auth_bp.post("/login")(login_user)
 auth_bp.post("/refresh")(refresh)
 auth_bp.post("/logout")(logout)
 
-
 # User Route
 before_middleware(user_bp, user_middleware)
 user_bp.get("/")(get_users)
@@ -59,6 +60,8 @@ post_bp.post("/create")(create_post)
 post_bp.put("/update/<int:id>")(update_post)
 post_bp.post("/multiple-delete")(delete_posts)
 post_bp.post("/export/csv")(stream_csv_export)
+post_bp.post("/import/csv")(import_csv)
+post_bp.get("/csv-progress/<task_id>")(csv_progress)
 
 
 # export all Blueprint
