@@ -34,9 +34,7 @@ auth_schema = AuthSchema()
 
 @validate_request(LoginRequest)
 def login_user(payload):
-    """
-    Authenticate a user and return JWT access and refresh tokens.
-    """
+    """Authenticate a user and return JWT access and refresh tokens."""
     try:
         user = AuthService.login(payload)
         user_data = auth_schema.dump(user)
@@ -60,9 +58,7 @@ def login_user(payload):
 
 @jwt_required(refresh=True)
 def refresh():
-    """
-    Generate Refresh token and Access Token
-    """
+    """Generate Refresh token and Access Token"""
     try:
         claims = get_jwt()
         old_refresh_token = request.headers.get("X-refresh-token")
@@ -71,7 +67,6 @@ def refresh():
         user_data = auth_schema.dump(user)
         if is_refresh_token_revoked(old_refresh_token):
             return {"msg": "Refresh token invalid."}, 403
-
         if not user:
             return {"msg": "Invalid identity."}, 403
         revoke_refresh_token(old_refresh_token)
@@ -82,7 +77,6 @@ def refresh():
         new_refresh_token = generate_and_save_refresh_token(user_id, remember_me)
         resp = jsonify(access_token=new_access_token, refresh_token=new_refresh_token)
         db.session.commit()
-
         return resp, 200
     except Exception as e:
         log_handler("error", "Auth Controller : refresh =>", e)

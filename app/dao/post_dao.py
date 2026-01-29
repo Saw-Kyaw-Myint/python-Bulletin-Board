@@ -8,6 +8,7 @@ from app.extension import db
 from app.models.post import Post
 from app.models.scopes.post_scopes import PostScopes
 from app.shared.commons import BATCH_SIZE
+from app.utils.request import clean_filters
 from config.logging import logger
 
 
@@ -18,36 +19,25 @@ class PostDao(BaseDao):
         Return filtered and paginated posts.
         """
         query = Post.query
-
-        query = PostScopes.active(query)
-        query = PostScopes.filter_title_description(query, filters)
-        query = PostScopes.filter_status(query, filters)
-        query = PostScopes.filter_date(query, filters)
-        query = PostScopes.latest(query)
-
+        query = PostDao.filters_query(query, filters)
         return query.paginate(page=page, per_page=per_page, error_out=False)
 
     def create(post: Post):
-        """
-        Add post to session
-        """
+        """Add post to session"""
         db.session.add(post)
         return post
 
     def get_post(post_id: int):
-        """
-        Get Post using post id
-        """ ""
-        return (
+        """Get Post using post id"""
+        post = (
             Post.query.options(joinedload(Post.creator), joinedload(Post.updater))
             .filter_by(id=post_id, deleted_at=None)
             .first()
         )
+        return post
 
     def delete_posts(post_ids: list[int]):
-        """
-        Soft delete posts by post ids in batches
-        """
+        """Soft delete posts by post ids in batches"""
         deleted_count = 0
         for batch in batched(post_ids, BATCH_SIZE):
             posts = Post.query.filter(
@@ -58,13 +48,15 @@ class PostDao(BaseDao):
                 deleted_count += 1
         return deleted_count
 
-    def delete_all_posts(exclude_ids: list[int]):
-        """
-        Delete all posts or all except exclude_ids.
-        """
-        query = Post.query.filter(Post.deleted_at.is_(None))
+    def delete_all_posts(exclude_ids: list[int], filters):
+        """Delete all posts or all except exclude_ids."""
+        query = Post.query
+        query = PostScopes.active(query)
         if exclude_ids:
             query = query.filter(~Post.id.in_(exclude_ids))
+        if filters:
+            filters = clean_filters(filters)
+            query = PostDao.filters_query(query, filters, False)
         deleted_count = query.update(
             {"deleted_at": datetime.utcnow()}, synchronize_session=False
         )
@@ -72,32 +64,38 @@ class PostDao(BaseDao):
         return deleted_count
 
     def get_by_title(title: str, post_id=None):
-        """
-        Get a post by title, optionally excluding a specific post_id
-        """
+        """Get a post by title, optionally excluding a specific post_id"""
         query = Post.query.filter(Post.title == title)
         if post_id:
             query = query.filter(Post.id != post_id)
         return query.first()
 
     def get_post_by_ids(post_ids: list[int]):
-        """
-        Get posts by using post_ids
-        """
+        """Get posts by using post_ids"""
         return Post.query.filter(Post.id.in_(post_ids)).all()
 
-    def stream_all_posts(exclude_ids: list[int]):
-        """
-        Stream all posts using batch loading.
-        """
-        query = Post.query.filter(Post.deleted_at.is_(None))
+    def stream_all_posts(exclude_ids: list[int], filters):
+        """Stream all posts using batch loading."""
+        query = Post.query
+        query = PostScopes.active(query)
         if exclude_ids:
             query = query.filter(~Post.id.in_(exclude_ids))
+        if filters:
+            filters = clean_filters(filters)
+            query = PostDao.filters_query(query, filters)
         return query.yield_per(1000)
 
     def stream_posts_by_ids(post_ids, all=False):
-        """
-        Stream posts by a list of post IDs using batch loading.
-        """
+        """Stream posts by a list of post IDs using batch loading."""
         query = Post.query.filter(Post.id.in_(post_ids))
         return query.yield_per(1000)
+
+    def filters_query(query, filters, latest=True):
+        """Filter Query"""
+        query = PostScopes.active(query)
+        query = PostScopes.filter_title_description(query, filters)
+        query = PostScopes.filter_status(query, filters)
+        query = PostScopes.filter_date(query, filters)
+        if latest:
+            query = PostScopes.latest(query)
+        return query

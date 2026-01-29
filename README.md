@@ -127,6 +127,10 @@ After running the seeder, you can `LogIn` using the `Admin Account` below.
  $ py format
 ```
 
+```
+celery -A app.celery_app worker -l info --pool=solo
+```
+
 ## 🔗 API Endpoint
 
 **Base API URL** <br>

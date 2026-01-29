@@ -30,5 +30,4 @@ def revoke_all_refresh_token(user_id):
 def is_refresh_token_revoked(refresh_token) -> bool:
     token_hash = hash_token(refresh_token)
     token = RefreshToken.query.filter_by(token_hash=token_hash).first()
-
     return (not token) or token.revoked or token.expires_at < datetime.utcnow()

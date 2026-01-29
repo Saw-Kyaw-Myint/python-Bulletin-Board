@@ -31,9 +31,7 @@ UPLOAD_DIR = "public/images/profile"
 
 
 def get_users():
-    """
-    Return a paginated list of users with optional filters.
-    """
+    """Return a paginated list of users with optional filters."""
     try:
         filters = {
             "name": request.args.get("name", type=str),
@@ -55,9 +53,7 @@ def get_users():
 
 @validate_request(UserCreateRequest)
 def create_user(payload):
-    """
-    Create User
-    """
+    """Create User"""
     file = request.files.get("profile")
     payload_dict = payload.model_dump()
     if not file:
@@ -81,9 +77,7 @@ def create_user(payload):
 
 
 def show_user(user_id):
-    """
-    Get User by user id
-    """
+    """Get User by user id"""
     user = UserService.get_user(user_id)
     return jsonify(user_schema.dump(user)), 200
 
@@ -91,9 +85,7 @@ def show_user(user_id):
 # Update user
 @validate_request(UserUpdateRequest)
 def update_user(payload, id):
-    """
-    Update User Information
-    """
+    """Update User Information"""
     file = request.files.get("profile")
     payload_dict = payload.model_dump()
     if file:
@@ -108,7 +100,6 @@ def update_user(payload, id):
             file.save(file_path)
         db.session.commit()
         user = auth_schema.dump(user)
-
         return jsonify({"msg": "user update is success", "user": user}), 200
     except HTTPException as e:
         db.session.rollback()
@@ -116,14 +107,11 @@ def update_user(payload, id):
     except Exception as e:
         log_handler("error", "User Controller", e)
         db.session.rollback()
-
         return jsonify({"msg": str(e)}), 500
 
 
 def delete_users():
-    """
-    Delete users
-    """
+    """Delete users"""
     payload = request.get_json(silent=True)
     if not payload:
         return jsonify({"msg": "empty data"}), 400
@@ -141,11 +129,7 @@ def delete_users():
 
 
 def lock_users():
-    """_Lock users_
-
-    Returns:
-        _json_: _Error or Success_
-    """
+    """Lock users"""
     data = request.get_json(silent=True) or {}
     user_ids = data.get("user_ids")
     if not isinstance(user_ids, list) or not user_ids:
@@ -164,9 +148,7 @@ def lock_users():
 
 
 def unlock_users():
-    """
-    Unlock users
-    """
+    """Unlock users"""
     data = request.get_json(silent=True) or {}
     user_ids = data.get("user_ids")
     if not isinstance(user_ids, list) or not user_ids:
@@ -185,9 +167,7 @@ def unlock_users():
 
 
 def optimize_file(file, user_id: str, sub_dir: str = "profile"):
-    """
-    Optimize file
-    """
+    """Optimize file"""
     user_dir = os.path.join(UPLOAD_DIR, str(user_id))
     os.makedirs(user_dir, exist_ok=True)
     file.stream.seek(0, os.SEEK_END)

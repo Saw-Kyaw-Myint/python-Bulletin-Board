@@ -55,3 +55,7 @@ class UserScopes:
         except ValueError as e:
             logger.error(f"Invalid date format: {e}")
         return query
+
+    def latest(query):
+        """Order users by latest."""
+        return query.order_by(User.id.desc())

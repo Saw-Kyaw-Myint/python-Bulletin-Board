@@ -13,35 +13,29 @@ from app.service.post_service import PostService
 from app.shared.commons import paginate_response, raise_error, validate_request
 from app.task.import_posts import import_posts_from_csv
 from app.utils.log import log_handler
+from app.utils.request import request_query
 from config.celery import CeleryConfig
 from config.logging import logger
 
 posts_schema = PostSchema(many=True)
 post_schema = PostSchema()
+r = redis.Redis.from_url(f"{CeleryConfig.REDIS_URL}/1")
 
 
 def post_list():
-    """
-    Return a paginated list of posts with optional filters.
-    """
-    filters = {
-        "name": request.args.get("name", type=str),
-        "description": request.args.get("description", type=str),
-        "status": request.args.get("status", type=int),
-        "date": request.args.get("date"),
-    }
+    """Return a paginated list of posts with optional filters."""
+    filters = request_query(
+        {"name": str, "description": str, "status": int, "date": str}
+    )
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
     posts = PostService.filter_paginate(filters, page, per_page)
-
     return paginate_response(posts, posts_schema)
 
 
 @validate_request(CreatePostRequest)
 def create_post(payload):
-    """
-    Create post
-    """
+    """Create post"""
     try:
         PostService.create_post(payload)
         db.session.commit()
@@ -56,18 +50,14 @@ def create_post(payload):
 
 
 def show_post(post_id):
-    """
-    Get User by user id
-    """
+    """Get User by user id"""
     post = PostService.get_post(post_id)
     return jsonify(post_schema.dump(post)), 200
 
 
 @validate_request(UpdatePostRequest)
 def update_post(payload, id):
-    """
-    Update post
-    """
+    """Update post"""
     try:
         post = PostService.update_post(payload, id)
         db.session.commit()
@@ -82,9 +72,7 @@ def update_post(payload, id):
 
 
 def delete_posts():
-    """
-    Delete posts
-    """
+    """Delete posts"""
     payload = request.get_json(silent=True)
     if not payload:
         return jsonify({"msg": "empty data"}), 400
@@ -102,9 +90,7 @@ def delete_posts():
 
 
 def stream_csv_export():
-    """
-    Export CSV
-    """
+    """Export CSV"""
     try:
         payload = request.get_json(silent=True) or {}
         generator = PostService.export_posts_csv(payload)
@@ -120,6 +106,7 @@ def stream_csv_export():
 
 
 def import_csv():
+    """CSV Import"""
     try:
         file = request.files.get("file")
         if not file:
@@ -131,32 +118,21 @@ def import_csv():
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         file.save(tmp.name)
         task = import_posts_from_csv.delay(tmp.name)
-
         return jsonify({"msg": "Import started", "task_id": task.id}), 200
     except Exception as e:
         log_handler("error", "Post Controller :  import csv =>", e)
         return jsonify({"msg": str(e)}), 500
 
 
-r = redis.Redis.from_url(f"{CeleryConfig.REDIS_URL}/1")
-
-
 def csv_progress(task_id):
-    """
-    Get CSV upload progress from redis
-
-    :param task_id: Description
-    """
+    """Get CSV upload progress from redis"""
     progress = r.get(f"csv_progress:{task_id}")
     status = r.get(f"csv_status:{task_id}")
     errors = r.get(f"csv_errors:{task_id}")
-
     response = {
         "progress": int(progress) if progress else 0,
         "status": status.decode() if status else "PENDING",
     }
-
     if response["status"] == "FAILURE":
         response["errors"] = json.loads(errors.decode()) if errors else []
-
     return jsonify(response)
