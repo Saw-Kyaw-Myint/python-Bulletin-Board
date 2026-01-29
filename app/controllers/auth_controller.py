@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import jsonify, request,url_for
-from app.extension import limiter
+from flask import jsonify, request, url_for
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -10,16 +9,17 @@ from flask_jwt_extended import (
     jwt_required,
 )
 from werkzeug.exceptions import HTTPException
-from app.mail.reset_password_mail import ResetPasswordMail
 
-from app.extension import db
+from app.extension import db, limiter
+from app.mail.reset_password_mail import ResetPasswordMail
 from app.models import User
 from app.request.auth_request import LoginRequest
 from app.request.forgot_password import ForgotPasswordRequest
+from app.request.reset_password_request import RestPasswordRequest
 from app.schema.auth_schema import AuthSchema
 from app.service.auth_service import AuthService
 from app.service.user_service import UserService
-from app.shared.commons import validate_request
+from app.shared.commons import FRONTEND_URL, validate_request
 from app.utils.log import log_handler
 from app.utils.token import (
     is_refresh_token_revoked,
@@ -28,7 +28,6 @@ from app.utils.token import (
 )
 from config.jwt import JWTConfig
 from config.logging import logger
-from app.shared.commons import FRONTEND_URL
 
 auth_schema = AuthSchema()
 
@@ -153,17 +152,32 @@ def forgot_password(payload):
     Send Reset password Mail with token
     """
     try:
-        token =  AuthService.forgot_password(payload)
+        token = AuthService.forgot_password(payload)
         reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
         ResetPasswordMail.send_reset_email(payload.email, reset_url)
-        db.session.commit()   
-        return jsonify({
-            "msg": f"Password reset link has been sent to {payload.email}"
-        }), 200
+        db.session.commit()
+        return (
+            jsonify({"msg": f"Password reset link has been sent to {payload.email}"}),
+            200,
+        )
     except HTTPException as e:
         db.session.rollback()
         return e
     except Exception as e:
-        log_handler("error","Auth Controller : forgot password =>", e)
+        log_handler("error", "Auth Controller : forgot password =>", e)
         return jsonify({"msg": str(e)}), 500
 
+
+@validate_request(RestPasswordRequest)
+def reset_password(payload):
+    try:
+        AuthService.reset_password(payload)
+        db.session.commit()
+        return jsonify({"msg": "Password has been reset successfully"}), 200
+    except HTTPException as e:
+        db.session.rollback()
+        return e
+    except Exception as e:
+        db.session.rollback()
+        log_handler("error", "Auth Controller : reset password =>", e)
+        return jsonify({"msg": str(e)}), 500

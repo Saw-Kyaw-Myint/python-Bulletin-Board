@@ -1,8 +1,8 @@
-from pydantic import BaseModel, EmailStr,Field
+from pydantic import BaseModel, EmailStr, Field
+
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr = Field(..., max_length=50)
-
 
     @classmethod
     def messages(cls):

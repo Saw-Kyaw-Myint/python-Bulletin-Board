@@ -1,13 +1,13 @@
 import os
 
-from flask import Flask, send_from_directory,jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from app.celery import celery_init_app
 from app.cli import register_commands
 from app.exceptions.handler import register_error_handlers
-from app.extension import db, limiter, ma, migrate,mail
+from app.extension import db, limiter, ma, mail, migrate
 from config.celery import CeleryConfig
 from config.cors import CORS_CONFIG
 from config.database import DatabaseConfig
@@ -15,7 +15,7 @@ from config.jwt import JWTConfig
 from config.logging import logger, setup_logging
 from config.mail import MailConfig
 
-app = Flask(__name__,template_folder="../templates")
+app = Flask(__name__, template_folder="../templates")
 
 # ///// implement log ///////////////
 setup_logging(app)
@@ -50,11 +50,18 @@ def serve_image(filename):
     uploads_path = os.path.join(basedir, "public", "images")
     return send_from_directory(uploads_path, filename)
 
+
 @app.errorhandler(429)
 def ratelimit_handler(e):
-    return jsonify({
-        "error": "Too many requests for this action. Please wait a few minutes before trying again."
-    }), 429
+    return (
+        jsonify(
+            {
+                "errors": "Too many requests for this action. Please wait a few minutes before trying again."
+            }
+        ),
+        429,
+    )
+
 
 @app.route("/api/test")
 def initialRoute():

@@ -1,9 +1,11 @@
-from flask_mail import Message
 from flask import render_template
+from flask_mail import Message
+
 from app.extension import mail
 from app.utils.decorators import static_all_methods
-from config.mail import MailConfig
 from config.logging import logger
+from config.mail import MailConfig
+
 
 @static_all_methods
 class ResetPasswordMail:
@@ -12,14 +14,8 @@ class ResetPasswordMail:
         """
         Send Mail
         """
-        msg = Message(
-            subject="Reset Your Password",
-            recipients=[to_email]
-        )
+        msg = Message(subject="Reset Your Password", recipients=[to_email])
 
-        msg.html = render_template(
-            "emails/reset_password.html",
-            reset_url=reset_url
-        )
+        msg.html = render_template("emails/reset_password.html", reset_url=reset_url)
 
         mail.send(msg)

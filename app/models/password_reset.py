@@ -9,7 +9,7 @@ class PasswordReset(db.Model):
     __tablename__ = "password_resets"
 
     id = db.Column(db.BigInteger, primary_key=True, nullable=False, autoincrement=True)
-    email = db.Column(db.String(255), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=False)
     token = db.Column(db.String(255), nullable=False)
 
 

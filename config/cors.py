@@ -16,6 +16,7 @@ Configuration:
       Example: ["Content-Type", "Authorization"]
     - supports_credentials (bool): Whether cookies and credentials are allowed.
 """
+
 import os
 
 from dotenv import load_dotenv

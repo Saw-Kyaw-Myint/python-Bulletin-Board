@@ -1,11 +1,13 @@
+import secrets
 from datetime import datetime, timezone
 
-from flask_bcrypt import check_password_hash
-import secrets
+from flask_bcrypt import Bcrypt, check_password_hash
+
+from app.dao.password_reset_dao import PasswordResetDao
 from app.dao.user_dao import UserDao
 from app.service.base_service import BaseService
 from app.shared.commons import field_error
-from app.dao.password_reset_dao import PasswordResetDao
+from app.utils.hash import hash_password
 
 
 class AuthService(BaseService):
@@ -24,7 +26,7 @@ class AuthService(BaseService):
         user.last_login_at = datetime.now(timezone.utc)
 
         return user
-    
+
     def forgot_password(payload):
         """
         Remove Token and insert token to DB
@@ -35,9 +37,22 @@ class AuthService(BaseService):
                 "email", "The Selected Email address doesn't exist or invalid.", 400
             )
         token = secrets.token_urlsafe(16)
-        PasswordResetDao.remove_token_by_email(payload.email)
-        PasswordResetDao.create_password_reset(payload,token)
+        reset = PasswordResetDao.find_one(email=payload.email)
+        if reset:
+            reset.soft_delete()
+        PasswordResetDao.create_password_reset(payload, token)
 
         return token
-            
-        
+
+    def reset_password(payload):
+        """
+        Reset Password and remove token
+        """
+        reset = PasswordResetDao.find_one(token=payload.token)
+        if not reset:
+            field_error("token", "Invalid token", 400)
+        user = UserDao.find_one(email=reset.email)
+        user.password = hash_password(payload.password)
+        reset.soft_delete()
+
+        return user
