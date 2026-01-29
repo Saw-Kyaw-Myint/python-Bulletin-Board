@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from config.logging import logger
 
 BATCH_SIZE = int(os.environ.get("BATCH_SIZE", 50))
+FRONTEND_URL = os.environ.get("FRONTEND_URL")
 MAX_FILE_SIZE = 1 * 1024 * 1024  # 1 MB
 
 

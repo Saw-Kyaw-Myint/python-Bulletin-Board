@@ -31,6 +31,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from app.shared.database import softDelete, timeStamp
 from config.celery import CeleryConfig
+from flask_mail import Mail
 
 # Initialize Flask extensions
 db = SQLAlchemy()
@@ -39,6 +40,7 @@ ma = Marshmallow()
 limiter = Limiter(
     key_func=get_remote_address, storage_uri=f"{CeleryConfig.REDIS_URL}/1"
 )
+mail = Mail()
 
 db.timeStamp = timeStamp
 db.softDelete = softDelete

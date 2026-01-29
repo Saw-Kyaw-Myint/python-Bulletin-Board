@@ -15,18 +15,17 @@ Configuration:
     - allow_headers (List[str]): Allowed headers in requests.
       Example: ["Content-Type", "Authorization"]
     - supports_credentials (bool): Whether cookies and credentials are allowed.
-
-Usage:
-    from config.cors import CORS_CONFIG
-    from flask_cors import CORS
-
-    app = Flask(__name__)
-    CORS(app, **CORS_CONFIG)
 """
+import os
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 # CORS configuration dictionary
 CORS_CONFIG = {
-    "origins": ["http://localhost:5173"],
+    "origins": [os.environ.get("FRONTEND_URL", "http://localhost:5173")],
     "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     "allow_headers": ["Content-Type", "Authorization", "X-Refresh-Token"],
 }

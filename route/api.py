@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 
-from app.controllers.auth_controller import login_user, logout, refresh
+from app.controllers.auth_controller import login_user, logout, refresh,forgot_password
 from app.controllers.post_controller import (
     create_post,
     csv_progress,
@@ -20,7 +20,7 @@ from app.controllers.user_controller import (
     unlock_users,
     update_user,
 )
-from app.extension import limiter
+# from app.extension import limiter
 from app.middleware.post_middleware import post_middleware
 from app.middleware.user_middleware import user_middleware
 from app.shared.commons import before_middleware
@@ -39,6 +39,7 @@ post_bp = Blueprint("post", __name__, url_prefix="/api/posts")
 # Auth Route
 auth_bp.post("/login")(login_user)
 auth_bp.post("/refresh")(refresh)
+auth_bp.post("/forgot-password")(forgot_password)
 auth_bp.post("/logout")(logout)
 
 # User Route
