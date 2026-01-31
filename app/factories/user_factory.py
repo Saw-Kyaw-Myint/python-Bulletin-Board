@@ -1,11 +1,12 @@
 # app/factories/user_factory.py
+import random
+
 from faker import Faker
 
 from app.enum.user import UserRole
 from app.factories.base_factory import BaseFactory
 from app.models import User
 from app.utils.hash import hash_password
-import random
 
 fake = Faker()
 
@@ -29,7 +30,7 @@ class UserFactory:
             },
             User,
         )
-    
+
     def create_user():
         admin = User.query.filter_by(email="user@user.com").first()
         if admin:

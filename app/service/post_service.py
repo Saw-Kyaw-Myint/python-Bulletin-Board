@@ -35,14 +35,14 @@ class PostService(BaseService):
         )
 
         post = PostDao.create(post)
-        return {'post':post}
+        return {"post": post}
 
     def get_post(post_id: int):
         """Get post by post id"""
         post = PostDao.get_post(post_id)
         if not post:
             return ValueError("Post don't not exist.")
-        
+
         return post
 
     def update_post(payload, id):

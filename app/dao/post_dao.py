@@ -4,14 +4,14 @@ from itertools import batched
 from sqlalchemy.orm import joinedload
 
 from app.dao.base_dao import BaseDao
+from app.enum.user import UserRole
 from app.extension import db
 from app.models.post import Post
 from app.models.scopes.post_scopes import PostScopes
 from app.shared.commons import BATCH_SIZE
+from app.utils.jwt import auth_user
 from app.utils.request import clean_filters
 from config.logging import logger
-from app.utils.jwt import auth_user
-from app.enum.user import UserRole
 
 
 class PostDao(BaseDao):
@@ -21,8 +21,8 @@ class PostDao(BaseDao):
         Return filtered and paginated posts.
         """
         query = Post.query
-        if int(auth_user()['role']) == UserRole.USER.value:
-            query = query.filter_by(create_user_id = auth_user()['id'])
+        if int(auth_user()["role"]) == UserRole.USER.value:
+            query = query.filter_by(create_user_id=auth_user()["id"])
         query = PostDao.filters_query(query, filters)
         return query.paginate(page=page, per_page=per_page, error_out=False)
 
@@ -85,7 +85,11 @@ class PostDao(BaseDao):
             query = query.filter(~Post.id.in_(exclude_ids))
         if filters:
             filters = clean_filters(filters)
-            query = PostDao.filters_query(query,filters,False,)
+            query = PostDao.filters_query(
+                query,
+                filters,
+                False,
+            )
         return query.yield_per(1000)
 
     def stream_posts_by_ids(post_ids, all=False):

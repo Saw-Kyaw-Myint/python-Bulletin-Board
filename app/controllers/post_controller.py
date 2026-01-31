@@ -38,7 +38,7 @@ def create_post(payload):
     """Create post"""
     try:
         post = PostService.create_post(payload)
-        if post.get('is_valid_request', False):
+        if post.get("is_valid_request", False):
             return jsonify({"is_valid_request": True}), 202
         db.session.commit()
         return jsonify({"msg": "Post creation is success."}), 200

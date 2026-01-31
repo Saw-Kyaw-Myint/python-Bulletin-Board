@@ -15,9 +15,7 @@ class AuthService(BaseService):
         """Login and update last_login_at"""
         user = UserDao.is_valid_user(payload.email)
         if not user:
-            field_error(
-                "email", "The Email address doesn't exist.", 400
-            )
+            field_error("email", "The Email address doesn't exist.", 400)
         if not check_password_hash(user.password, payload.password):
             field_error("password", "Invalid credentials.", 400)
         user.last_login_at = datetime.now(timezone.utc)
