@@ -5,6 +5,7 @@ from app.enum.user import UserRole
 from app.factories.base_factory import BaseFactory
 from app.models import User
 from app.utils.hash import hash_password
+import random
 
 fake = Faker()
 
@@ -28,17 +29,35 @@ class UserFactory:
             },
             User,
         )
+    
+    def create_user():
+        admin = User.query.filter_by(email="user@user.com").first()
+        if admin:
+            return admin
+
+        return BaseFactory.create_one(
+            lambda: {
+                "name": "User",
+                "email": "user@user.com",
+                "password": hash_password("User123@"),
+                "phone": "09999999999",
+                "address": "User Address",
+                "role": UserRole.USER.value,
+            },
+            User,
+        )
 
     def make_data():
         """Return fake user data (not saved to DB)."""
         admin = UserFactory.create_admin()
+        user = UserFactory.create_user()
         return {
             "name": fake.name(),
             "email": fake.unique.email(),
             "password": hash_password("Password123@"),
             "phone": "09451340513",
             "address": fake.address(),
-            "create_user_id": admin.id,
+            "create_user_id": random.choice([admin.id, user.id]),
         }
 
     def create():

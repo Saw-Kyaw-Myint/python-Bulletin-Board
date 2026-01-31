@@ -27,5 +27,5 @@ class LoginRequest(BaseModel):
             "email.value_error": "The Email Address field format is invalid.",
             "email.too_long": "The Email may not be greater than 50 characters.",
             "password.missing": "The Password field is required.",
-            "password.value_error": "The Password must be 8-20 chars and can include letters, digits, and special chars.",
+            "password.value_error": "The Password must be 6-20 chars and can include letters, digits, and special chars.",
         }

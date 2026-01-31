@@ -72,6 +72,8 @@ class UserService(BaseService):
         user.role = payload["role"]
         user.address = payload["address"]
         user.updated_user_id = get_jwt_identity()
+        user.phone = payload['phone']
+        user.dob = payload['dob']
 
         if payload.get("password"):
             user.password = hash_password(payload["password"])

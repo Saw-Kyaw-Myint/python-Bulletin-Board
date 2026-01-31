@@ -60,7 +60,6 @@ user_bp.post("/multiple-delete")(delete_users)
 user_bp.post("/lock")(lock_users)
 user_bp.post("/unlock")(unlock_users)
 
-
 # Post Route
 before_middleware(post_bp, post_middleware)
 post_bp.get("/")(post_list)

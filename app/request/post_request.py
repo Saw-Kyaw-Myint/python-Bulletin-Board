@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, field_validator
 class CreatePostRequest(BaseModel):
     title: str = Field(..., max_length=255)
     description: str
+    is_valid_request: bool = False
 
     @classmethod
     def messages(cls):

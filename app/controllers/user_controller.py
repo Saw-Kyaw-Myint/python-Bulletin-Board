@@ -66,7 +66,7 @@ def create_user(payload):
         UserService.create(payload_dict)
         file.save(opt_file["storage_path"])
         db.session.commit()
-        return jsonify({"msg": "Register success"}), 200
+        return jsonify({"msg": "User is created successfully."}), 200
     except HTTPException as e:
         db.session.rollback()
         return e
@@ -100,7 +100,7 @@ def update_user(payload, id):
             file.save(file_path)
         db.session.commit()
         user = auth_schema.dump(user)
-        return jsonify({"msg": "user update is success", "user": user}), 200
+        return jsonify({"msg": "Update is success", "user": user}), 200
     except HTTPException as e:
         db.session.rollback()
         return e
@@ -178,7 +178,7 @@ def optimize_file(file, user_id: str, sub_dir: str = "profile"):
 
     ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
     if ext not in ALLOWED_EXTENSIONS:
-        field_error("profile", "The profile must be a file  of type.jpg,png", 400)
+        field_error("profile", "The profile must be a file  of type .jpg,png", 400)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     original_filename = secure_filename(file.filename)
     name, ext = os.path.splitext(original_filename)

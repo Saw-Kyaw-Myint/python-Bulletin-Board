@@ -96,9 +96,7 @@ def refresh():
 
 @jwt_required()
 def logout():
-    """
-    Logout
-    """
+    """Logout"""
     try:
         old_refresh_token = request.headers.get("X-refresh-token")
         revoke_refresh_token(old_refresh_token)
