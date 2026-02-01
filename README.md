@@ -127,6 +127,25 @@ After running the seeder, you can `LogIn` using the `Admin Account` below.
  $ py format
 ```
 
+## Install Redis Server With Docker
+
+### Build Redis Image
+
+```
+docker build -t my-redis .
+```
+
+### Run Redis Container
+
+```
+docker run -d \
+  --name redis-server \
+  -p 6379:6379 \
+  my-redis
+```
+
+### Open New Terminal Run Celery
+
 ```
 celery -A app.celery_app worker -l info --pool=solo
 ```
