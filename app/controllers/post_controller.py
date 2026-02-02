@@ -121,12 +121,19 @@ def import_csv():
     """CSV Import"""
     try:
         file = request.files.get("file")
+        MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
         if not file:
             return jsonify({"msg": "CSV file required"}), 400
         filename = file.filename
         ext = os.path.splitext(filename)[1].lower()
         if ext != ".csv":
-            return jsonify({"msg": "Only CSV files are allowed"}), 400
+            return jsonify({"msg": "The CSV File field is required"}), 400
+        # Check file size (2MB)
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        if file_size > MAX_FILE_SIZE:
+            return jsonify({"msg": "The CSV File size must be greater than 2MB."}), 400
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         file.save(tmp.name)
         task = import_posts_from_csv.delay(tmp.name)

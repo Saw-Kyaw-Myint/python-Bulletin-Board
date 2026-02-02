@@ -5,10 +5,11 @@ from flask_bcrypt import Bcrypt, check_password_hash
 
 from app.dao.password_reset_dao import PasswordResetDao
 from app.dao.user_dao import UserDao
+from app.models.user import User
 from app.service.base_service import BaseService
 from app.shared.commons import field_error
 from app.utils.hash import hash_password
-from app.models.user import User
+
 
 class AuthService(BaseService):
     def register(payload):

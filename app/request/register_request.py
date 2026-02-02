@@ -17,6 +17,7 @@ from config.logging import logger
 
 NonEmptyStr = constr(min_length=1, strip_whitespace=True)
 
+
 class RegisterRequest(BaseModel):
     """
     Schema for validating user creation requests.
@@ -26,7 +27,6 @@ class RegisterRequest(BaseModel):
     email: EmailStr = Field(..., max_length=50)
     password: NonEmptyStr
     confirm_password: NonEmptyStr
-
 
     @field_validator("password")
     @classmethod

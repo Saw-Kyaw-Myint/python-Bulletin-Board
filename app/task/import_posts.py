@@ -45,16 +45,26 @@ def import_posts_from_csv(self, file_path):
                 raise ValueError("CSV is empty")
 
             headers = [h.strip().lower() for h in reader[0].keys()]
-            required_cols = ["title", "description", "status"]
+            required_cols = [
+                "title",
+                "description",
+                "status",
+                "created_user_id",
+                "updated_user_id",
+            ]
             missing_cols = [col for col in required_cols if col not in headers]
 
             if missing_cols:
                 r.set(f"csv_status:{task_id}", "FAILURE")
                 r.set(
                     f"csv_errors:{task_id}",
-                    json.dumps([{
-                        "error": f"CSV must have columns: {', '.join(required_cols)}"
-                    }])
+                    json.dumps(
+                        [
+                            {
+                                "error": f"The CSV File must has 5 column : {', '.join(required_cols)}"
+                            }
+                        ]
+                    ),
                 )
                 return
 
@@ -65,20 +75,33 @@ def import_posts_from_csv(self, file_path):
 
                 # Skip duplicates in CSV
                 if title in seen_titles:
-                    errors.append({"row": idx, "error": "duplicate title in CSV"})
+                    errors.append(
+                        {"row": idx, "error": f"The Title in row {idx} is duplicated."}
+                    )
                     continue
                 seen_titles.add(title)
 
                 # Skip duplicates in DB
                 if Post.query.filter_by(title=title).first():
-                    errors.append({"row": idx, "error": "duplicate title in DB"})
+                    errors.append(
+                        {
+                            "row": idx,
+                            "error": f"The Title in row {idx} is already taken.",
+                        }
+                    )
+                    continue
+
+                if int(row.get("status")) > 1:
+                    errors.append(
+                        {"row": idx, "error": f"The status in row {idx} must be 0 or 1"}
+                    )
                     continue
 
                 post = Post(
                     title=title,
                     description=row.get("description"),
                     status=int(row.get("status", 1)),
-                    create_user_id=row.get("create_user_id"),
+                    create_user_id=row.get("created_user_id"),
                     updated_user_id=row.get("updated_user_id"),
                     created_at=row.get("created_at") or datetime.utcnow(),
                     updated_at=row.get("updated_at") or datetime.utcnow(),

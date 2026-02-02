@@ -122,8 +122,8 @@ class UserService(BaseService):
         if not users:
             raise ValueError("not user found")
         return users
-    
-    def change_password(payload,id):
+
+    def change_password(payload, id):
         user = UserDao.find_one(id=id)
         if not user:
             raise ValueError("User doesn't exists.")
