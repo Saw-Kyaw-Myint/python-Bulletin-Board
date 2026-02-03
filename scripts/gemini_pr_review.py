@@ -59,7 +59,7 @@ def main():
 
         # ========== 4. GEMINI API (2026 STABLE) ==========
         MODEL_NAME = "gemini-2.5-flash"
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
+        URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 
         headers = {
             "Content-Type": "application/json",
@@ -81,25 +81,20 @@ Provide your review in **GitHub diff style Markdown**:
 Code Diffs:
 {diffs}
 """
-        payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": 2048,
-            },
-        }
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
     
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=(10, 120))
+            response = requests.post(URL, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
-            review_text = result['candidates'][0]['content']['parts'][0]['text']
+            review_text = result["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError):
+            print('API Error: Model did not return text. Reason:',reason)
             reason = result.get("candidates", [{}])[0].get("finishReason", "UNKNOWN")
             raise RuntimeError(f"API Error: Model did not return text. Reason: {reason}")
 
         # ========== 5. POST COMMENT IN MARKDOWN DIFF ==========
-        comment_body = f"## 🤖 Gemini 3 AI Review (Code Suggestions)\n\n```diff\n{review_text}\n```"
+        comment_body = f"## 🤖 Gemini 3 AI Review (Code Suggestions)\n\n {review_text}"
         pr.create_issue_comment(comment_body)
 
         print(f"✅ Review posted successfully using {MODEL_NAME}")
