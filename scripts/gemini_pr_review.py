@@ -111,9 +111,10 @@ OUTPUT FORMAT (STRICT):
 
 VALID OUTPUT STRUCTURE:
 
-filename.py
+filename.py (Note => Bold and underline to this Line)
 ```diff
 -L23: existing line
+
 + suggestion line
 Short explanation of the problem and fix. (Note => Bold this Line)
 
