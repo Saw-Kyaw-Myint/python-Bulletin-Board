@@ -90,7 +90,7 @@ filename.py
 ```diff
 - old line
 + new line
-Short explanation of the problem and fix.
+Short explanation of the problem and fix. (Note => Bold this Line)
 
 DO NOT add anything else.
 
