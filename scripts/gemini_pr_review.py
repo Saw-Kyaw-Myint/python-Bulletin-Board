@@ -76,31 +76,35 @@ MANDATORY RULES (DO NOT VIOLATE):
 - DO NOT describe what the code does
 - ONLY point out bugs, security issues, or concrete improvements
 - If there are NO problems, output NOTHING (empty response)
+- Any output not matching the required format is INVALID
 
 OUTPUT FORMAT (STRICT):
-1. Output ONLY a GitHub diff-style Markdown block with changed lines
-   - Use '-' for original lines
-   - Use '+' for suggested fixes
-2. Immediately AFTER the diff block, write the explanation in **BOLD**
-3. Max 1–2 sentences
-4. No extra text before or after
+- If multiple files are present, repeat the format below per file
+- File name must be shown as plain text on its own line
+- Then show ONE diff block
+- Then ONE **BOLD** explanation (1–2 sentences max)
 
-EXAMPLE OUTPUT (VALID):
+VALID OUTPUT STRUCTURE:
 
+filename.py
 ```diff
-- result = 10 / 0
-+ result = 10 / value if value != 0 else None
-This prevents a ZeroDivisionError and avoids crashing the application.
+- old line
++ new line
+Short explanation of the problem and fix.
 
-INVALID OUTPUT EXAMPLES (DO NOT DO):
+DO NOT add anything else.
+
+INVALID OUTPUT EXAMPLES (NEVER DO THESE):
 
 "This is good practice"
 
 "The code looks fine"
 
-Any text without a diff
+Explanations without a diff
 
-Any diff containing --- , +++ , @@
+Diff blocks containing --- , +++ , @@
+
+Paragraphs or summaries
 
 CODE CHANGES TO REVIEW:
 {diffs}
