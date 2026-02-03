@@ -66,21 +66,22 @@ def main():
             "x-goog-api-key": GEMINI_API_KEY,
         }
 
-        print('diffs => ', diffs)
-
         # Markdown diff style prompt
         prompt = f"""
 You are a Senior Python/Flask Developer.
 
 Review the following code changes for bugs, security issues, and best practices.
 
-IMPORTANT RULES:
-- Output ONLY GitHub diff-style Markdown
-- Include ONLY lines that need changes or fixes
-- Do NOT repeat unchanged lines
-- Do NOT write explanations outside the diff
-- If a line is problematic, show it with '-' and the fixed version with '+'
-- Inline comments are allowed ONLY at the end of the changed line
+OUTPUT FORMAT (STRICT):
+1. Show ONLY problematic lines in a GitHub diff-style Markdown code block
+   - Use '-' for original line
+   - Use '+' for suggested fix
+2. Immediately AFTER the code block, write a short review comment in plain text
+   - 1–2 sentences only
+   - Explain WHY the change is needed
+3. Do NOT repeat unchanged lines
+4. Do NOT write long paragraphs or general advice
+5. If there are NO issues, output NOTHING
 
 Code Diffs:
 {diffs}
