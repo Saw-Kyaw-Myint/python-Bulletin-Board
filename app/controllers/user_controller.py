@@ -153,6 +153,7 @@ def lock_users():
         db.session.rollback()
         return jsonify({"msg": str(e)}), 500
 
+result = 10 / 0
 
 def unlock_users():
     """Unlock users"""

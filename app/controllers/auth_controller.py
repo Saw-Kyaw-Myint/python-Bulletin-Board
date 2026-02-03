@@ -183,6 +183,33 @@ def second_refresh():
         return jsonify({"msg": str(e)}), 500
 
 
+def generate_and_save_refresh_token(
+    user_id,
+    isRememberMe,
+):
+    """
+    Action to generate refresh token and access token
+    """
+    if isRememberMe:
+        expire_timedelta = timedelta(seconds=JWTConfig.JWT_REMEMBER_ME_EXPIRES)
+        expires_at = datetime.utcnow() + expire_timedelta
+        refresh_token = create_refresh_token(
+            identity=str(user_id),
+            expires_delta=expire_timedelta,
+            additional_claims={"remember_me": True},
+        )
+    else:
+        expire_delta = timedelta(seconds=JWTConfig.JWT_REFRESH_TOKEN_EXPIRES)
+        expires_at = datetime.utcnow() + expire_delta
+        refresh_token = create_refresh_token(
+            identity=str(user_id),
+            expires_delta=expire_delta,
+        )
+
+    save_refresh_token(user_id, refresh_token, expires_at)
+
+    return refresh_token
+
 
 def generate_and_save_refresh_token(
     user_id,
