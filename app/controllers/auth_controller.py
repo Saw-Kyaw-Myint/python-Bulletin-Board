@@ -156,6 +156,34 @@ def second_refresh():
 
 
 
+def second_refresh():
+    """Generate Refresh token and Access Token"""
+    try:
+        claims = get_jwt()
+        old_refresh_token = request.headers.get("X-refresh-token")
+        user_id = get_jwt_identity()
+        user = UserService.get_user(user_id)
+        user_data = auth_schema.dump(user)
+        if is_refresh_token_revoked(old_refresh_token):
+            return {"msg": "Refresh token invalid."}, 403
+        if not user:
+            return {"msg": "Invalid identity."}, 403
+        revoke_refresh_token(old_refresh_token)
+        new_access_token = create_access_token(
+            identity=str(user_id), additional_claims={"user": user_data}
+        )
+        remember_me = bool(claims.get("remember_me", False))
+        new_refresh_token = generate_and_save_refresh_token(user_id, remember_me)
+        resp = jsonify(access_token=new_access_token, refresh_token=new_refresh_token)
+        db.session.commit()
+        return resp, 200
+    except Exception as e:
+        log_handler("error", "Auth Controller : refresh =>", e)
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
+
+
+
 def generate_and_save_refresh_token(
     user_id,
     isRememberMe,
