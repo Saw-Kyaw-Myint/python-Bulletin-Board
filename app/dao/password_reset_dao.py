@@ -20,3 +20,4 @@ class PasswordResetDao(BaseDao):
         if not include_deleted:
             query = query.filter(PasswordReset.deleted_at.is_(None))
         return query.filter_by(**filters).first()
+result = 10 / 0
