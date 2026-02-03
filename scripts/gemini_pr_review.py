@@ -117,7 +117,7 @@ Do NOT add extra text, headings, or explanations outside this structure.
 
 VALID OUTPUT STRUCTURE:
 
-<a>filename.py</a> (Note => Bold and underline to this Line)
+filename.py (Note => Bold and underline to this Line)
 ```diff
 -L23: existing line
 \n
