@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from app import app
 from app.extension import db
 from app.models import Post
+from app.shared.commons import to_datetime
 from config.celery import CeleryConfig
 
 # Redis for tracking progress
@@ -22,7 +23,7 @@ r = redis.Redis.from_url(f"{CeleryConfig.REDIS_URL}/1")
     retry_backoff=5,
     retry_kwargs={"max_retries": 3},
 )
-def import_posts_from_csv(self, file_path):
+def import_posts_from_csv(self, file_path, user_id):
     """
     Import posts from CSV into the database, track progress in Redis, and handle duplicates.
     """
@@ -49,8 +50,6 @@ def import_posts_from_csv(self, file_path):
                 "title",
                 "description",
                 "status",
-                "created_user_id",
-                "updated_user_id",
             ]
             missing_cols = [col for col in required_cols if col not in headers]
 
@@ -61,7 +60,7 @@ def import_posts_from_csv(self, file_path):
                     json.dumps(
                         [
                             {
-                                "error": f"The CSV File must has 5 column : {', '.join(required_cols)}"
+                                "error": f"The CSV File must has 3 column : {', '.join(required_cols)}"
                             }
                         ]
                     ),
@@ -101,10 +100,10 @@ def import_posts_from_csv(self, file_path):
                     title=title,
                     description=row.get("description"),
                     status=int(row.get("status", 1)),
-                    create_user_id=row.get("created_user_id"),
-                    updated_user_id=row.get("updated_user_id"),
-                    created_at=row.get("created_at") or datetime.utcnow(),
-                    updated_at=row.get("updated_at") or datetime.utcnow(),
+                    create_user_id=user_id,
+                    updated_user_id=user_id,
+                    created_at=to_datetime(row.get("created_at")),
+                    updated_at=to_datetime(row.get("updated_at")),
                 )
 
                 db.session.add(post)

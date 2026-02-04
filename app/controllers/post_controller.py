@@ -4,6 +4,7 @@ import tempfile
 
 import redis
 from flask import Response, jsonify, request, stream_with_context
+from flask_jwt_extended import get_jwt_identity
 from werkzeug.exceptions import HTTPException
 
 from app.extension import db
@@ -120,6 +121,7 @@ def stream_csv_export():
 def import_csv():
     """CSV Import"""
     try:
+        user_id = get_jwt_identity()
         file = request.files.get("file")
         MAX_FILE_SIZE = 2 * 1024 * 1024  # 2 MB
         if not file:
@@ -136,7 +138,7 @@ def import_csv():
             return jsonify({"msg": "The CSV File size must be greater than 2MB."}), 400
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
         file.save(tmp.name)
-        task = import_posts_from_csv.delay(tmp.name)
+        task = import_posts_from_csv.delay(tmp.name, user_id)
         return jsonify({"msg": "Import started", "task_id": task.id}), 200
     except Exception as e:
         log_handler("error", "Post Controller :  import csv =>", e)

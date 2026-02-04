@@ -36,10 +36,43 @@ class UserCreateRequest(BaseModel):
     profile: Any = None
     is_valid_request: bool = None
 
-    @field_validator("profile")
-    def file_required(cls, v):
-        if not v:
-            raise ValueError("The Profile field is required")
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, str):
+            raise ValueError("Phone must be a string")
+        if len(v) > 20:
+            raise ValueError("Phone number must not exceed 20 characters")
+        if not v.isdigit():
+            raise ValueError("Phone number must contain only digits (0-9)")
+
+        return v
+
+    @field_validator("address")
+    @classmethod
+    def validate_address(cls, v):
+        print("v1", v)
+        if v is None:
+            print("v", v)
+            return v
+        if len(v) > 255:
+            raise ValueError()
+
+        return v
+
+    @field_validator("dob")
+    @classmethod
+    def validate_dob(cls, v):
+        if v is None:
+            return v
+
+        if isinstance(v, str):
+            v = date.fromisoformat(v)
+        if not (1900 <= v.year <= 2025):
+            raise ValueError("DOB must be between 1900 and 2025")
+
         return v
 
     @field_validator("password")
@@ -72,6 +105,7 @@ class UserCreateRequest(BaseModel):
             "password.value_error": "The Password must be 8-20 chars and can include letters, digits, and special chars.",
             "confirm_password.missing": "The Password Confirm field is required.",
             "confirm_password.value_error": "The Password Confirmation and password must match.",
+            "address.value_error": "The Address may not be greater than 255 characters.",
             "role.missing": "The Role field is required.",
             "address.missing": "The Address field is required.",
             "profile.value_error": "The Profile field is required.",
@@ -94,10 +128,43 @@ class UserUpdateRequest(BaseModel):
     address: NonEmptyStr
     is_valid_request: bool = None
 
-    @field_validator("profile")
-    def file_required(cls, v):
-        if not v:
-            raise ValueError("The Profile field is required")
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, str):
+            raise ValueError("Phone must be a string")
+        if len(v) > 20:
+            raise ValueError("Phone number must not exceed 20 characters")
+        if not v.isdigit():
+            raise ValueError("Phone number must contain only digits (0-9)")
+
+        return v
+
+    @field_validator("dob")
+    @classmethod
+    def validate_dob(cls, v):
+        if v is None:
+            return v
+
+        if isinstance(v, str):
+            v = date.fromisoformat(v)
+        if not (1900 <= v.year <= 2025):
+            raise ValueError("DOB must be between 1900 and 2025")
+
+        return v
+
+    @field_validator("address")
+    @classmethod
+    def validate_address(cls, v):
+        print("v1", v)
+        if v is None:
+            print("v", v)
+            return v
+        if len(v) > 255:
+            raise ValueError()
+
         return v
 
     @field_validator("password")
@@ -134,6 +201,7 @@ class UserUpdateRequest(BaseModel):
             "confirm_password.missing": "The Password Confirm field is required.",
             "confirm_password.value_error": "The Password Confirmation and password must match.",
             "role.missing": "The Role field is required.",
+            "address.value_error": "The Address may not be greater than 255 characters.",
             "address.missing": "The Address field is required.",
             "profile.value_error": "The Profile field is required.",
         }

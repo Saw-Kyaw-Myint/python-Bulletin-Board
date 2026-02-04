@@ -56,19 +56,18 @@ def get_users():
 @validate_request(UserCreateRequest)
 def create_user(payload):
     """Create User"""
-    file = request.files.get("profile")
     payload_dict = payload.model_dump()
-    if not file:
-        field_error("profile", "The Profile field is required", 400)
     user_id = payload_dict["user_id"]
-    opt_file = optimize_file(file, user_id)
-    payload_dict["profile"] = opt_file["file_url"]
-
+    file = request.files.get("profile")
     try:
+        if file:
+            opt_file = optimize_file(file, user_id)
+            payload_dict["profile"] = opt_file["file_url"]
         user = UserService.create(payload_dict)
         if user.get("is_valid_request", False):
             return jsonify(response_valid_request()), 202
-        file.save(opt_file["storage_path"])
+        if file:
+            file.save(opt_file["storage_path"])
         db.session.commit()
         return jsonify({"msg": "User is created successfully."}), 200
     except HTTPException as e:
@@ -91,8 +90,8 @@ def show_user(user_id):
 @validate_request(UserUpdateRequest)
 def update_user(payload, id):
     """Update User Information"""
-    file = request.files.get("profile")
     payload_dict = payload.model_dump()
+    file = request.files.get("profile")
     if file:
         user_id = get_jwt_identity()
         opt_file = optimize_file(file, user_id)

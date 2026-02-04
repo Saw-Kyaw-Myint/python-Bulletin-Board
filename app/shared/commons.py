@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from functools import wraps
 from typing import Any
 
@@ -146,3 +147,14 @@ def paginate_response(pagination: Any, schema: Schema) -> Response:
 
 def response_valid_request():
     return {"is_valid_request": True}
+
+
+def to_datetime(value):
+    if not value:
+        return datetime.utcnow()
+
+    if isinstance(value, datetime):
+        return value
+
+    # Expected input: 2/2/2026 3:36
+    return datetime.strptime(value, "%m/%d/%Y %H:%M")

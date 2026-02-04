@@ -17,7 +17,7 @@ class User(db.Model):
     password = db.Column(db.String(255))
     profile_path = db.Column(db.String(255))
     role = db.Column(db.Integer, nullable=False, default=UserRole.USER.value)
-    dob = db.Column(db.DateTime)
+    dob = db.Column(db.Date)
     phone = db.Column(db.String(20))
     address = db.Column(db.String(255))
     lock_flg = db.Column(db.Integer, nullable=False, default=LockStatus.UNLOCKED.value)
